@@ -35,7 +35,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         isCollapsed ? "w-[60px]" : "w-[220px]"
       )}
     >
-      <div className="flex h-14 flex-shrink-0 items-center px-3">
+      <div className="relative flex h-14 flex-shrink-0 items-center px-3">
         <Link
           href="/dashboard"
           className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-muted"
@@ -55,13 +55,15 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             e.stopPropagation();
             onToggle();
           }}
-          className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className={cn(
+            "absolute right-0 top-1/2 z-50 flex h-6 w-6 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground"
+          )}
           aria-label="Toggle sidebar"
         >
           {isCollapsed ? (
-            <PanelLeftOpen className="h-4 w-4" />
+            <PanelLeftOpen className="h-3 w-3" />
           ) : (
-            <PanelLeftClose className="h-4 w-4" />
+            <PanelLeftClose className="h-3 w-3" />
           )}
         </button>
       </div>

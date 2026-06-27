@@ -9,8 +9,7 @@ export default function DashboardPage() {
 
   const { greeting, action } = useMemo(
     () => getGreeting(userName),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [userName]
   );
 
   const timeIcon = getTimeIcon();
