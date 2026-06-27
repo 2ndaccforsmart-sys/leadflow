@@ -34,16 +34,18 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const width = isCollapsed ? 60 : 220;
 
   return (
     <aside
-      className={cn(
-        "fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-border bg-background transition-all duration-300 ease-in-out",
-        isCollapsed ? "w-[60px]" : "w-[220px]"
-      )}
+      style={{
+        width: `${width}px`,
+        transition: "width 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+      }}
+      className="fixed left-0 top-0 z-50 flex h-screen flex-col overflow-hidden border-r border-border bg-background"
     >
       {/* Logo + Toggle */}
-      <div className="flex h-14 items-center gap-2 px-3">
+      <div className="flex h-14 flex-shrink-0 items-center gap-2 px-3">
         <Link
           href="/dashboard"
           className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-200 hover:bg-muted"
@@ -51,20 +53,26 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           <Zap className="h-5 w-5 text-foreground" />
         </Link>
 
-        <div
-          className={cn(
-            "flex flex-1 items-center overflow-hidden transition-all duration-300 ease-in-out",
-            isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-          )}
-        >
-          <span className="whitespace-nowrap text-sm font-semibold tracking-tight">
+        {!isCollapsed && (
+          <span className="flex-1 whitespace-nowrap text-sm font-semibold tracking-tight">
             LeadFlow
           </span>
-        </div>
+        )}
 
         <button
-          onClick={onToggle}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggle();
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggle();
+          }}
           className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
+          aria-label="Toggle sidebar"
         >
           {isCollapsed ? (
             <PanelLeftOpen className="h-4 w-4" />
@@ -85,7 +93,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                   <Link
                     href={item.href}
                     className={cn(
-                      "group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-200 ease-in-out",
+                      "group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors duration-200",
                       isActive
                         ? "bg-muted text-foreground"
                         : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
@@ -97,14 +105,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                         isActive && "scale-110"
                       )}
                     />
-                    <span
-                      className={cn(
-                        "whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out",
-                        isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-                      )}
-                    >
-                      {item.name}
-                    </span>
+                    {!isCollapsed && <span>{item.name}</span>}
                   </Link>
                 </TooltipTrigger>
                 {isCollapsed && (
@@ -117,23 +118,20 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           })}
         </nav>
 
-        {/* Search shortcut */}
+        {/* Search */}
         <div className="border-t border-border px-2 py-2">
           <Tooltip>
             <TooltipTrigger>
               <button className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-muted/50 hover:text-foreground">
                 <Search className="h-4 w-4 flex-shrink-0" />
-                <span
-                  className={cn(
-                    "flex flex-1 items-center overflow-hidden transition-all duration-300 ease-in-out",
-                    isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-                  )}
-                >
-                  <span className="flex-1 text-left">Search</span>
-                  <kbd className="flex h-5 items-center rounded border border-border bg-muted px-1 font-mono text-[10px] text-muted-foreground">
-                    <Command className="mr-0.5 h-2.5 w-2.5" />K
-                  </kbd>
-                </span>
+                {!isCollapsed && (
+                  <>
+                    <span className="flex-1 text-left">Search</span>
+                    <kbd className="flex h-5 items-center rounded border border-border bg-muted px-1 font-mono text-[10px] text-muted-foreground">
+                      <Command className="mr-0.5 h-2.5 w-2.5" />K
+                    </kbd>
+                  </>
+                )}
               </button>
             </TooltipTrigger>
             {isCollapsed && (
