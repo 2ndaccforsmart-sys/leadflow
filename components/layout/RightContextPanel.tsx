@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Bell, PanelRightOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -28,16 +28,8 @@ export function RightContextPanel({
         )}
       >
         {/* Header */}
-        <div className="flex h-16 items-center justify-between px-4">
+        <div className="flex h-16 items-center px-4">
           <h2 className="text-sm font-semibold text-foreground">Activity</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggle}
-            className="h-8 w-8 text-muted-foreground"
-          >
-            <PanelRightClose className="h-4 w-4" />
-          </Button>
         </div>
 
         <Separator />
