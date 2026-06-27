@@ -61,16 +61,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
         <button
           type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onToggle();
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onToggle();
-          }}
+          onClick={onToggle}
           className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
           aria-label="Toggle sidebar"
         >
