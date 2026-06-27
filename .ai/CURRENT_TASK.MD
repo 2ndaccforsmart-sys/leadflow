@@ -31,6 +31,12 @@ None
   - 15 unique greetings tied to lead generation
   - Random selection with 70/30 time-based/general split
   - File: lib/greetings.ts
+- AI-first dashboard hero section:
+  - Large greeting with time icon
+  - "Who are we finding today?" heading
+  - AI search box with glow effect
+  - Suggested search chips (Dentists, Law Firms, Restaurants, SaaS, Agencies, Clinics)
+  - Centered layout with generous whitespace
 
 ## Notes
 - Supabase integration deferred until credentials are ready

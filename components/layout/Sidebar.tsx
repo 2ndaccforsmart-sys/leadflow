@@ -9,7 +9,6 @@ import {
   Settings,
   Zap,
   PanelLeftClose,
-  PanelLeftOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,37 +34,47 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         isCollapsed ? "w-[60px]" : "w-[220px]"
       )}
     >
+      {isCollapsed && (
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+          className="absolute right-0 top-0 z-50 h-full w-4 cursor-ew-resize transition-all hover:w-5 hover:bg-border/30"
+          title="Expand sidebar"
+        />
+      )}
+
       <div className="relative flex h-14 flex-shrink-0 items-center px-3">
         <Link
           href="/dashboard"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
           className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-muted"
         >
           <Zap className="h-5 w-5 text-foreground" />
         </Link>
 
         {!isCollapsed && (
-          <span className="ml-2 flex-1 whitespace-nowrap text-sm font-semibold tracking-tight">
-            LeadFlow
-          </span>
+          <>
+            <span className="ml-2 flex-1 whitespace-nowrap text-sm font-semibold tracking-tight">
+              LeadFlow
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle();
+              }}
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label="Collapse sidebar"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </button>
+          </>
         )}
-
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggle();
-          }}
-          className={cn(
-            "absolute right-0 top-1/2 z-50 flex h-6 w-6 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground"
-          )}
-          aria-label="Toggle sidebar"
-        >
-          {isCollapsed ? (
-            <PanelLeftOpen className="h-3 w-3" />
-          ) : (
-            <PanelLeftClose className="h-3 w-3" />
-          )}
-        </button>
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 px-2 py-2">

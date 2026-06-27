@@ -1,25 +1,22 @@
 "use client";
 
-import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { useSidebar } from "./SidebarProvider";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { isCollapsed, toggle } = useSidebar();
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar
-        isCollapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed((prev) => !prev)}
-      />
+      <Sidebar isCollapsed={isCollapsed} onToggle={toggle} />
       <div
         style={{
-          paddingLeft: sidebarCollapsed ? "60px" : "220px",
+          paddingLeft: isCollapsed ? "60px" : "220px",
           transition: "padding-left 300ms cubic-bezier(0.4, 0, 0.2, 1)",
         }}
       >

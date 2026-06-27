@@ -1,55 +1,96 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Search, Sparkles } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { getGreeting, getTimeIcon } from "@/lib/greetings";
+import { cn } from "@/lib/utils";
+
+const suggestedSearches = [
+  { label: "Dentists", emoji: "🦷" },
+  { label: "Law Firms", emoji: "⚖️" },
+  { label: "Restaurants", emoji: "🍽️" },
+  { label: "SaaS", emoji: "💻" },
+  { label: "Agencies", emoji: "🎯" },
+  { label: "Clinics", emoji: "🏥" },
+];
 
 export default function DashboardPage() {
   const userName = "Daksh";
+  const [searchValue, setSearchValue] = useState("");
 
   const { greeting, action } = useMemo(
     () => getGreeting(userName),
-    [userName]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   const timeIcon = getTimeIcon();
 
   return (
     <AppLayout>
-      <div className="space-y-8">
-        {/* Greeting */}
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {greeting} {timeIcon}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{action}</p>
-        </div>
-
-        {/* Content area - empty shell */}
-        <div className="rounded-xl border border-border bg-card p-8">
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="rounded-full bg-muted p-4">
-              <svg
-                className="h-6 w-6 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z"
-                />
-              </svg>
-            </div>
-            <h3 className="mt-4 text-sm font-medium text-foreground">
-              Dashboard content
-            </h3>
-            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              Your dashboard will display lead generation metrics and recent
-              activity once data is available.
+      <div className="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center">
+        <div className="w-full max-w-2xl space-y-10">
+          {/* Greeting */}
+          <div className="text-center">
+            <p className="text-lg text-muted-foreground">
+              {greeting} {timeIcon}
             </p>
+          </div>
+
+          {/* Hero heading */}
+          <div className="text-center">
+            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+              Who are we finding today?
+            </h1>
+            <p className="mt-3 text-base text-muted-foreground">
+              Search for any business, industry, or location to discover leads.
+            </p>
+          </div>
+
+          {/* Search box */}
+          <div className="relative">
+            {/* Glow effect */}
+            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 opacity-60 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
+
+            <div className="relative flex items-center rounded-2xl border border-border bg-card p-2 shadow-lg transition-shadow duration-300 hover:shadow-xl">
+              <div className="flex h-12 items-center pl-4">
+                <Search className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <input
+                type="text"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                placeholder="Dentists in Austin, Law firms in NYC..."
+                className="flex-1 bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground/60"
+              />
+              <button
+                className={cn(
+                  "flex h-10 items-center gap-2 rounded-xl px-5 text-sm font-medium transition-all duration-200",
+                  searchValue
+                    ? "bg-primary text-primary-foreground shadow-md hover:shadow-lg"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                <Sparkles className="h-4 w-4" />
+                Search
+              </button>
+            </div>
+          </div>
+
+          {/* Suggested searches */}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <span className="text-xs text-muted-foreground">Try:</span>
+            {suggestedSearches.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => setSearchValue(item.label.toLowerCase())}
+                className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-foreground"
+              >
+                <span>{item.emoji}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
           </div>
         </div>
       </div>
