@@ -22,10 +22,12 @@ None
   - Top bar with search and user menu
   - Right context panel (activity feed)
   - Responsive layout with smooth transitions
-  - Premium dark theme (Linear/Vercel inspired)
   - All page shells ready (dashboard, search, analytics, settings)
+- White/light theme applied (Linear/Vercel inspired)
+- Pushed to GitHub: https://github.com/2ndaccforsmart-sys/leadflow
 
 ## Notes
 - Supabase integration deferred until credentials are ready
 - App runs clean without backend dependencies
 - Layout uses state management for sidebar/panel toggles
+- Theme uses semantic color tokens for easy switching
