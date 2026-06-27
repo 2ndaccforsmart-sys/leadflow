@@ -101,8 +101,10 @@ export default function AssistantPage() {
     }
   };
 
-  const handleSendMessage = (content: string) => {
-    if (!activeConvId) {
+  const handleSendMessage = async (content: string) => {
+    let currentConvId = activeConvId;
+
+    if (!currentConvId) {
       // Create new conversation
       const newConv: Conversation = {
         id: Date.now().toString(),
@@ -119,12 +121,13 @@ export default function AssistantPage() {
         ],
       };
       setConversations([newConv, ...conversations]);
-      setActiveConvId(newConv.id);
+      currentConvId = newConv.id;
+      setActiveConvId(currentConvId);
     } else {
       // Add message to existing conversation
       setConversations(
         conversations.map((c) => {
-          if (c.id === activeConvId) {
+          if (c.id === currentConvId) {
             const newMessage: Message = {
               id: Date.now().toString(),
               role: "user",
@@ -143,30 +146,121 @@ export default function AssistantPage() {
       );
     }
 
-    // Simulate AI response
+    // Get all messages for API call
+    const conv = conversations.find((c) => c.id === currentConvId);
+    const apiMessages = [
+      ...(conv?.messages || []).map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+      { role: "user" as const, content },
+    ];
+
+    // Stream AI response
     setIsStreaming(true);
-    setTimeout(() => {
-      setIsStreaming(false);
-      if (activeConvId) {
-        setConversations(
-          conversations.map((c) => {
-            if (c.id === activeConvId) {
-              const aiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                role: "assistant",
-                content: `I'll help you with that. Let me analyze the data and find the best leads for your request about "${content.slice(0, 50)}...". Based on my analysis, I found several promising prospects that match your criteria.`,
-                timestamp: new Date(),
-              };
-              return {
-                ...c,
-                messages: [...c.messages, aiMessage],
-              };
-            }
-            return c;
-          })
-        );
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: apiMessages }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get response");
       }
-    }, 2000);
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = "";
+
+      // Add empty assistant message
+      const assistantMsgId = (Date.now() + 1).toString();
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id === currentConvId) {
+            return {
+              ...c,
+              messages: [
+                ...c.messages,
+                {
+                  id: assistantMsgId,
+                  role: "assistant" as const,
+                  content: "",
+                  timestamp: new Date(),
+                },
+              ],
+            };
+          }
+          return c;
+        })
+      );
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6);
+              if (data === "[DONE]") break;
+
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  assistantContent += parsed.content;
+                  // Update the assistant message with streamed content
+                  setConversations((prev) =>
+                    prev.map((c) => {
+                      if (c.id === currentConvId) {
+                        return {
+                          ...c,
+                          messages: c.messages.map((m) =>
+                            m.id === assistantMsgId
+                              ? { ...m, content: assistantContent }
+                              : m
+                          ),
+                        };
+                      }
+                      return c;
+                    })
+                  );
+                }
+              } catch {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+      // Add error message
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id === currentConvId) {
+            return {
+              ...c,
+              messages: [
+                ...c.messages,
+                {
+                  id: (Date.now() + 2).toString(),
+                  role: "assistant" as const,
+                  content: "Sorry, I encountered an error. Please try again.",
+                  timestamp: new Date(),
+                },
+              ],
+            };
+          }
+          return c;
+        })
+      );
+    } finally {
+      setIsStreaming(false);
+    }
   };
 
   return (
@@ -213,7 +307,7 @@ export default function AssistantPage() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
-                        if (inputValue.trim()) {
+                        if (inputValue.trim() && !isStreaming) {
                           handleSendMessage(inputValue.trim());
                           setInputValue("");
                         }
@@ -225,15 +319,15 @@ export default function AssistantPage() {
                   />
                   <button
                     onClick={() => {
-                      if (inputValue.trim()) {
+                      if (inputValue.trim() && !isStreaming) {
                         handleSendMessage(inputValue.trim());
                         setInputValue("");
                       }
                     }}
-                    disabled={!inputValue.trim()}
+                    disabled={!inputValue.trim() || isStreaming}
                     className={cn(
                       "absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg transition-all duration-200",
-                      inputValue.trim()
+                      inputValue.trim() && !isStreaming
                         ? "bg-primary text-primary-foreground hover:bg-primary/90"
                         : "text-muted-foreground/40"
                     )}
@@ -322,7 +416,7 @@ export default function AssistantPage() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
-                          if (inputValue.trim()) {
+                          if (inputValue.trim() && !isStreaming) {
                             handleSendMessage(inputValue.trim());
                             setInputValue("");
                           }
@@ -334,15 +428,15 @@ export default function AssistantPage() {
                     />
                     <button
                       onClick={() => {
-                        if (inputValue.trim()) {
+                        if (inputValue.trim() && !isStreaming) {
                           handleSendMessage(inputValue.trim());
                           setInputValue("");
                         }
                       }}
-                      disabled={!inputValue.trim()}
+                      disabled={!inputValue.trim() || isStreaming}
                       className={cn(
                         "absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg transition-all duration-200",
-                        inputValue.trim()
+                        inputValue.trim() && !isStreaming
                           ? "bg-primary text-primary-foreground hover:bg-primary/90"
                           : "text-muted-foreground/40"
                       )}
