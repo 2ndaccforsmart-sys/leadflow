@@ -1,15 +1,29 @@
+"use client";
+
+import { useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { getGreeting, getTimeIcon } from "@/lib/greetings";
 
 export default function DashboardPage() {
+  const userName = "Daksh";
+
+  const { greeting, action } = useMemo(
+    () => getGreeting(userName),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const timeIcon = getTimeIcon();
+
   return (
     <AppLayout>
       <div className="space-y-8">
-        {/* Page header */}
+        {/* Greeting */}
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Welcome back. Here&apos;s an overview of your lead generation activity.
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {greeting} {timeIcon}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{action}</p>
         </div>
 
         {/* Content area - empty shell */}

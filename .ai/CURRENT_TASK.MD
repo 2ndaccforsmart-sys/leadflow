@@ -25,6 +25,12 @@ None
   - All page shells ready (dashboard, search, analytics, settings)
 - White/light theme applied (Linear/Vercel inspired)
 - Pushed to GitHub: https://github.com/2ndaccforsmart-sys/leadflow
+- Greetings system implemented:
+  - Time-based greetings (morning, afternoon, evening)
+  - Two-line format: greeting + action nudge
+  - 15 unique greetings tied to lead generation
+  - Random selection with 70/30 time-based/general split
+  - File: lib/greetings.ts
 
 ## Notes
 - Supabase integration deferred until credentials are ready
