@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
+import { RightContextPanel } from "./RightContextPanel";
 import { useSidebar } from "./SidebarProvider";
+import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -10,19 +13,28 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { isCollapsed, toggle } = useSidebar();
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
 
   return (
     <div className="min-h-screen bg-background">
       <Sidebar isCollapsed={isCollapsed} onToggle={toggle} />
       <div
-        style={{
-          paddingLeft: isCollapsed ? "60px" : "220px",
-          transition: "padding-left 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-        }}
+        className={cn(
+          "flex min-h-screen flex-col transition-all duration-300 ease-in-out",
+          isCollapsed ? "pl-[68px]" : "pl-64",
+          rightPanelOpen ? "pr-80" : "pr-0"
+        )}
       >
-        <TopBar />
-        <main className="p-6">{children}</main>
+        <TopBar
+          rightPanelOpen={rightPanelOpen}
+          onToggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
+        />
+        <main className="flex-1 p-8">{children}</main>
       </div>
+      <RightContextPanel
+        isOpen={rightPanelOpen}
+        onToggle={() => setRightPanelOpen(!rightPanelOpen)}
+      />
     </div>
   );
 }

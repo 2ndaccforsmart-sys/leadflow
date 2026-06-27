@@ -90,72 +90,116 @@ export default function SearchPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-4xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight">Search</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Find potential leads by keyword, location, or industry.
-          </p>
-        </div>
-
-        {/* Search box */}
-        <div className="relative mb-8">
-          <div className="flex items-center rounded-xl border border-border bg-card p-2 shadow-sm transition-shadow duration-200 focus-within:shadow-md focus-within:ring-1 focus-within:ring-ring">
-            <div className="flex h-10 items-center pl-3">
-              <Search className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <input
-              type="text"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="Dentists in Austin, Law firms in NYC..."
-              className="flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground/60"
-            />
-            <button
-              onClick={handleSearch}
-              className={cn(
-                "flex h-8 items-center gap-1.5 rounded-lg px-4 text-xs font-medium transition-all duration-200",
-                searchValue
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Search
-            </button>
-          </div>
-        </div>
-
-        {/* Suggested searches */}
+      <div className="flex min-h-[calc(100vh-8rem)] flex-col">
+        {/* Centered hero search - only show when no results */}
         {!showResults && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">Try:</span>
-            {suggestedSearches.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => {
-                  setSearchValue(item.label.toLowerCase());
-                  setShowResults(true);
-                }}
-                className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-foreground"
-              >
-                <span>{item.emoji}</span>
-                <span>{item.label}</span>
-              </button>
-            ))}
+          <div className="flex flex-1 flex-col items-center justify-center">
+            <div className="w-full max-w-2xl space-y-8">
+              {/* Heading */}
+              <div className="text-center">
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                  Find your next lead
+                </h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Search for any business, industry, or location.
+                </p>
+              </div>
+
+              {/* Search box */}
+              <div className="relative">
+                {/* Glow effect */}
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 opacity-60 blur-xl" />
+
+                <div className="relative flex items-center rounded-2xl border border-border bg-card p-2 shadow-lg transition-shadow duration-300 hover:shadow-xl">
+                  <div className="flex h-12 items-center pl-4">
+                    <Search className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    placeholder="Dentists in Austin, Law firms in NYC..."
+                    className="flex-1 bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground/60"
+                  />
+                  <button
+                    onClick={handleSearch}
+                    className={cn(
+                      "flex h-10 items-center gap-2 rounded-xl px-5 text-sm font-medium transition-all duration-200",
+                      searchValue
+                        ? "bg-primary text-primary-foreground shadow-md hover:shadow-lg"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Search
+                  </button>
+                </div>
+              </div>
+
+              {/* Suggested searches */}
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <span className="text-xs text-muted-foreground">Try:</span>
+                {suggestedSearches.map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => {
+                      setSearchValue(item.label.toLowerCase());
+                      setShowResults(true);
+                    }}
+                    className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-foreground"
+                  >
+                    <span>{item.emoji}</span>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Results */}
+        {/* Results view */}
         {showResults && (
-          <SearchResults
-            results={mockResults}
-            onResearch={(id) => console.log("Research:", id)}
-            onGenerateEmail={(id) => console.log("Generate email:", id)}
-            onSave={(id) => console.log("Save:", id)}
-          />
+          <div className="mx-auto w-full max-w-4xl py-8">
+            {/* Compact search bar at top */}
+            <div className="mb-8">
+              <div className="relative">
+                <div className="flex items-center rounded-xl border border-border bg-card p-2 shadow-sm transition-shadow duration-200 focus-within:shadow-md focus-within:ring-1 focus-within:ring-ring">
+                  <div className="flex h-10 items-center pl-3">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    placeholder="Dentists in Austin, Law firms in NYC..."
+                    className="flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground/60"
+                  />
+                  <button
+                    onClick={handleSearch}
+                    className={cn(
+                      "flex h-8 items-center gap-1.5 rounded-lg px-4 text-xs font-medium transition-all duration-200",
+                      searchValue
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Search
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Results */}
+            <SearchResults
+              results={mockResults}
+              onResearch={(id) => console.log("Research:", id)}
+              onGenerateEmail={(id) => console.log("Generate email:", id)}
+              onSave={(id) => console.log("Save:", id)}
+            />
+          </div>
         )}
       </div>
     </AppLayout>

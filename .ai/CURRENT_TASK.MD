@@ -43,6 +43,16 @@ None
   - Action buttons: Research, Generate Email, Save
   - Notion/Linear inspired premium card design
   - File: components/search/SearchResults.tsx
+- Top bar redesign:
+  - Centered search bar with Cmd+K hint
+  - Brand logo on left
+  - User avatar dropdown on right
+  - Right panel toggle button
+- Search page redesign:
+  - Centered hero search with glow effect
+  - Suggested search chips
+  - Compact search bar in results view
+  - Full-screen centered layout
 
 ## Notes
 - Supabase integration deferred until credentials are ready
