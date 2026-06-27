@@ -10,17 +10,16 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const sidebarWidth = sidebarCollapsed ? 60 : 220;
 
   return (
     <div className="min-h-screen bg-background">
       <Sidebar
         isCollapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onToggle={() => setSidebarCollapsed((prev) => !prev)}
       />
       <div
         style={{
-          paddingLeft: `${sidebarWidth}px`,
+          paddingLeft: sidebarCollapsed ? "60px" : "220px",
           transition: "padding-left 300ms cubic-bezier(0.4, 0, 0.2, 1)",
         }}
       >
