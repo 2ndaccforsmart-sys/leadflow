@@ -53,6 +53,15 @@ None
   - Suggested search chips
   - Compact search bar in results view
   - Full-screen centered layout
+- AI Assistant page:
+  - Conversation history sidebar
+  - Suggested prompts with icons
+  - Beautiful message bubbles (user: dark, assistant: light)
+  - Streaming indicator with pulse animation
+  - Modern input box with send button
+  - Copy, thumbs up/down actions on messages
+  - New conversation creation
+  - File: app/assistant/page.tsx, components/ai/*
 
 ## Notes
 - Supabase integration deferred until credentials are ready

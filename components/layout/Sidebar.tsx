@@ -9,11 +9,13 @@ import {
   Settings,
   Zap,
   PanelLeftClose,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Assistant", href: "/assistant", icon: Sparkles },
   { name: "Search", href: "/search", icon: Search },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Settings", href: "/settings", icon: Settings },
