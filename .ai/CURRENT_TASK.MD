@@ -37,6 +37,12 @@ None
   - AI search box with glow effect
   - Suggested search chips (Dentists, Law Firms, Restaurants, SaaS, Agencies, Clinics)
   - Centered layout with generous whitespace
+- Search results cards:
+  - Company cards with logo, name, industry, employees, revenue, location, website
+  - AI Score badge with color coding (Excellent/Strong/Good/Fair)
+  - Action buttons: Research, Generate Email, Save
+  - Notion/Linear inspired premium card design
+  - File: components/search/SearchResults.tsx
 
 ## Notes
 - Supabase integration deferred until credentials are ready
