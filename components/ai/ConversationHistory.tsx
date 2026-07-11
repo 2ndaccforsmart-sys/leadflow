@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, MessageSquare, Trash2, Search } from "lucide-react";
+import { Plus, MessageSquare, Trash2, Search, AlertTriangle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Conversation {
@@ -60,6 +60,7 @@ export function ConversationHistory({
   onDelete,
 }: ConversationHistoryProps) {
   const [search, setSearch] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const filtered = search
     ? conversations.filter(
@@ -70,6 +71,22 @@ export function ConversationHistory({
     : conversations;
 
   const groups = groupByDate(filtered);
+
+  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setConfirmDeleteId(id);
+  };
+
+  const handleConfirmDelete = () => {
+    if (confirmDeleteId) {
+      onDelete(confirmDeleteId);
+      setConfirmDeleteId(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDeleteId(null);
+  };
 
   return (
     <div className="flex h-full flex-col border-r border-border/60 bg-card/50">
@@ -97,6 +114,35 @@ export function ConversationHistory({
           />
         </div>
       </div>
+
+      {/* Delete confirmation banner */}
+      {confirmDeleteId && (
+        <div className="mx-2 mb-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-foreground">Delete conversation?</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground/70">
+                This conversation and all its messages will be permanently removed.
+              </p>
+            </div>
+          </div>
+          <div className="mt-2 flex items-center justify-end gap-1.5">
+            <button
+              onClick={handleCancelDelete}
+              className="rounded-md px-2.5 py-1 text-[11px] font-medium text-muted-foreground/70 transition-colors hover:bg-muted/60 hover:text-foreground"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmDelete}
+              className="rounded-md bg-destructive px-2.5 py-1 text-[11px] font-medium text-destructive-foreground transition-colors hover:bg-destructive/90"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* List */}
       <div className="flex-1 overflow-y-auto px-2 py-1">
@@ -142,10 +188,7 @@ export function ConversationHistory({
                         {formatRelativeTime(conv.timestamp)}
                       </span>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(conv.id);
-                        }}
+                        onClick={(e) => handleDeleteClick(e, conv.id)}
                         className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded opacity-0 transition-opacity duration-150 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
                       >
                         <Trash2 className="h-3 w-3" />

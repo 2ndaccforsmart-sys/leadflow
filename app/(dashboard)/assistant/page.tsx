@@ -34,6 +34,7 @@ export default function AssistantPage() {
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [persistentMemories, setPersistentMemories] = useState(true);
   const [reopenChats, setReopenChats] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const emptyInputRef = useRef<HTMLDivElement>(null);
@@ -49,6 +50,8 @@ export default function AssistantPage() {
     try {
       const ws = localStorage.getItem("settings_web_search");
       if (ws !== null) setWebSearchEnabled(JSON.parse(ws));
+      const pm = localStorage.getItem("settings_persistent_memories");
+      if (pm !== null) setPersistentMemories(JSON.parse(pm));
       const rc = localStorage.getItem("settings_reopen_chats");
       if (rc !== null) setReopenChats(JSON.parse(rc));
     } catch {
@@ -58,6 +61,7 @@ export default function AssistantPage() {
 
   // Load conversations from localStorage on mount
   useEffect(() => {
+    if (!persistentMemories) return;
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -82,7 +86,7 @@ export default function AssistantPage() {
     } catch {
       // ignore
     }
-  }, [reopenChats]);
+  }, [persistentMemories, reopenChats]);
 
   // Immediately save conversations to localStorage when they change (not during streaming)
   useEffect(() => {
@@ -91,6 +95,7 @@ export default function AssistantPage() {
       return;
     }
     if (isStreaming) return;
+    if (!persistentMemories) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
       if (activeConvId && reopenChats) {
@@ -99,11 +104,12 @@ export default function AssistantPage() {
     } catch {
       // ignore
     }
-  }, [conversations, activeConvId, isStreaming, reopenChats]);
+  }, [conversations, activeConvId, isStreaming, persistentMemories, reopenChats]);
 
   // Flush save on tab close / visibility change
   useEffect(() => {
     if (isFirstRender.current) return;
+    if (!persistentMemories) return;
     const flush = () => {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -132,7 +138,7 @@ export default function AssistantPage() {
       window.removeEventListener("beforeunload", flush);
       document.removeEventListener("visibilitychange", flush);
     };
-  }, [conversations]);
+  }, [conversations, persistentMemories]);
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
   const messages = useMemo(() => activeConv?.messages || [], [activeConv]);
