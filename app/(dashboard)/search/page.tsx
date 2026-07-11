@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { Search, Sparkles } from "lucide-react";
-import { m, useReducedMotion } from "framer-motion";
 import { SearchResults } from "@/components/search/SearchResults";
-import { FadeIn, FadeInStagger, FadeInStaggerItem } from "@/components/motion";
 import { cn } from "@/lib/utils";
 
 const suggestedItems = [
@@ -21,7 +19,6 @@ export default function SearchPage() {
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const prefersReducedMotion = useReducedMotion();
 
   const handleSearch = () => {
     if (!query.trim()) return;
@@ -43,81 +40,79 @@ export default function SearchPage() {
       {/* Search Hero */}
       <div className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-3xl">
-          <FadeIn y={20}>
-            <div className="space-y-8">
-              <div className="text-center">
-                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                  Find Your Next Client
-                </h1>
-                <p className="mt-4 text-lg text-muted-foreground/70">
-                  Search by industry, location, or company name to discover qualified leads
-                </p>
-              </div>
+          <div className="space-y-8">
+            <div
+              className="text-center animate-in fade-in slide-in-from-bottom-4 duration-700"
+            >
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+                Find Your Next Client
+              </h1>
+              <p className="mt-4 text-lg text-muted-foreground/70">
+                Search by industry, location, or company name to discover qualified leads
+              </p>
+            </div>
 
-              <FadeIn delay={0.1} y={10}>
-                <div className="relative">
-                  <div
+            <div
+              className="animate-in fade-in slide-in-from-bottom-4 duration-700"
+              style={{ animationDelay: "100ms", animationFillMode: "both" }}
+            >
+              <div className="relative">
+                <div
+                  className={cn(
+                    "relative flex items-center rounded-2xl border bg-card p-2 transition-all duration-300",
+                    "border-border/60 shadow-md hover:shadow-lg hover:border-border"
+                  )}
+                >
+                  <div className="flex h-14 items-center pl-4">
+                    <Search className="h-5 w-5 text-muted-foreground/60" />
+                  </div>
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                      placeholder="Search companies, industries, locations..."
+                      className="w-full bg-transparent px-4 text-lg outline-none"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSearch}
+                    disabled={!query.trim() || isSearching}
                     className={cn(
-                      "relative flex items-center rounded-2xl border bg-card p-2 transition-all duration-300",
-                      "border-border/60 shadow-md hover:shadow-lg hover:border-border"
+                      "flex h-10 items-center gap-2 rounded-xl px-5 text-sm font-medium transition-all duration-200 cursor-pointer",
+                      query.trim() && !isSearching
+                        ? "bg-primary text-primary-foreground shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
+                        : "bg-muted text-muted-foreground cursor-not-allowed"
                     )}
                   >
-                    <div className="flex h-14 items-center pl-4">
-                      <Search className="h-5 w-5 text-muted-foreground/60" />
-                    </div>
-                    <div className="relative flex-1">
-                      <input
-                        type="text"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                        placeholder="Search companies, industries, locations..."
-                        className="w-full bg-transparent px-4 text-lg outline-none"
-                      />
-                    </div>
-                    <m.button
-                      onClick={handleSearch}
-                      disabled={!query.trim() || isSearching}
-                      whileHover={query.trim() && !isSearching && !prefersReducedMotion ? { scale: 1.02 } : undefined}
-                      whileTap={query.trim() && !isSearching && !prefersReducedMotion ? { scale: 0.98 } : undefined}
-                      className={cn(
-                        "flex h-10 items-center gap-2 rounded-xl px-5 text-sm font-medium transition-all duration-200 cursor-pointer",
-                        query.trim() && !isSearching
-                          ? "bg-primary text-primary-foreground shadow-sm hover:shadow-md"
-                          : "bg-muted text-muted-foreground cursor-not-allowed"
-                      )}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      {isSearching ? "Searching..." : "Search"}
-                    </m.button>
-                  </div>
+                    <Sparkles className="h-4 w-4" />
+                    {isSearching ? "Searching..." : "Search"}
+                  </button>
                 </div>
-              </FadeIn>
-
-              <FadeInStagger stagger={0.05} delay={0.2}>
-                <div className="flex flex-wrap items-center justify-center gap-2.5">
-                  <span className="text-xs text-muted-foreground/60">Try:</span>
-                  {suggestedItems.map((item) => (
-                    <FadeInStaggerItem key={item.label}>
-                      <m.button
-                        onClick={() => handleSuggestedSearch(item.label)}
-                        whileHover={
-                          !prefersReducedMotion
-                            ? { scale: 1.04, borderColor: "rgba(var(--primary), 0.3)" }
-                            : undefined
-                        }
-                        whileTap={!prefersReducedMotion ? { scale: 0.97 } : undefined}
-                        className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3.5 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-foreground hover:shadow-sm cursor-pointer"
-                      >
-                        <span>{item.emoji}</span>
-                        <span>{item.label}</span>
-                      </m.button>
-                    </FadeInStaggerItem>
-                  ))}
-                </div>
-              </FadeInStagger>
+              </div>
             </div>
-          </FadeIn>
+
+            <div
+              className="animate-in fade-in slide-in-from-bottom-4 duration-700"
+              style={{ animationDelay: "200ms", animationFillMode: "both" }}
+            >
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                <span className="text-xs text-muted-foreground/60">Try:</span>
+                {suggestedItems.map((item, i) => (
+                  <button
+                    key={item.label}
+                    onClick={() => handleSuggestedSearch(item.label)}
+                    className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3.5 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-foreground hover:shadow-sm hover:scale-105 active:scale-[0.97] cursor-pointer"
+                    style={{ animationDelay: `${250 + i * 50}ms`, animationFillMode: "both" }}
+                  >
+                    <span>{item.emoji}</span>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
