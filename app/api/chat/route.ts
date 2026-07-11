@@ -3,6 +3,46 @@ import { NextResponse } from "next/server";
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
+// Keywords that suggest a query needs real-time / fresh data
+const FRESH_DATA_PATTERNS = [
+  /latest/i,
+  /trending/i,
+  /current/i,
+  /news/i,
+  /today/i,
+  /recent/i,
+  /now/i,
+  /realtime/i,
+  /real.time/i,
+  /update/i,
+  /weather/i,
+  /price[s]?/i,
+  /stock[s]?/i,
+  /score[s]?/i,
+  /result[s]?/i,
+  /who\s+is/i,
+  /what\s+(?:is|are|happened)/i,
+  /how\s+(?:much|many|old)/i,
+  /when\s+(?:was|did|will)/i,
+  /where\s+(?:is|are)/i,
+  /show\s+me/i,
+  /tell\s+me\s+(?:about|the\s+latest)/i,
+  /search\s+(?:for|about)/i,
+  /find\s+/i,
+  /look\s+up/i,
+];
+
+function queryNeedsFreshData(query: string): boolean {
+  return FRESH_DATA_PATTERNS.some((p) => p.test(query));
+}
+
+function isCasualChat(query: string): boolean {
+  const trimmed = query.trim();
+  if (trimmed.length < 8) return true;
+  const casual = /^(hi|hey|hello|howdy|yo|sup|good\s+(morning|afternoon|evening)|what'?s\s+up|how\s+(are|'re)\s+(you|ya)|how'?s\s+(it\s+going|life)|what'?s\s+good|nice|thanks|thank\s+you|cool|ok|okay|bye|see\s+ya|lol|haha)$/i;
+  return casual.test(trimmed);
+}
+
 export async function POST(request: Request) {
   try {
     const { messages, webSearch } = await request.json();
@@ -16,38 +56,40 @@ export async function POST(request: Request) {
 
     // ── Web search ──
     let webSearchContext = "";
-    if (webSearch) {
-      const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user");
-      const query: string | undefined = lastUserMsg?.content;
+    const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user");
+    const query: string | undefined = lastUserMsg?.content;
 
-      if (query) {
-        // Strip /web-search prefix if user typed it manually
-        const cleaned = query.replace(/^\/web-search\s*/i, "").trim();
-        if (cleaned) {
-          try {
-            console.log("Web search triggered for:", cleaned);
-            const searchRes = await fetch(
-              `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/web-search?q=${encodeURIComponent(cleaned)}`
-            );
-            if (!searchRes.ok) {
-              console.error("Web search API error:", searchRes.status);
-            }
-            const searchData = await searchRes.json();
-            console.log("Web search results count:", searchData.results?.length || 0);
-            if (searchData.results?.length) {
-              webSearchContext =
-                "\n\n# WEB SEARCH RESULTS\n\n" +
-                searchData.results
-                  .map(
-                    (r: any, i: number) =>
-                      `${i + 1}. [${r.title}](${r.url})\n   ${r.snippet}`
-                  )
-                  .join("\n\n") +
-                "\n\nUse the web search results above to inform your response. Cite sources where relevant. If the results aren't relevant to the user's question, ignore them.\n\nIMPORTANT: When web search results are provided above, the B2B scope restriction is temporarily suspended — answer the user's question using these results even if it falls outside your normal domain.";
-            }
-          } catch {
-            // web search failed silently — continue without it
+    if (query) {
+      const cleaned = query.replace(/^\/web-search\s*/i, "").trim();
+      const manualOverride = query !== cleaned;
+      const needsFresh = queryNeedsFreshData(cleaned);
+      const skipCasual = isCasualChat(cleaned);
+      const shouldSearch = manualOverride || needsFresh || (webSearch && !skipCasual);
+
+      if (cleaned && shouldSearch) {
+        try {
+          console.log("Web search triggered for:", cleaned);
+          const searchRes = await fetch(
+            `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/web-search?q=${encodeURIComponent(cleaned)}`
+          );
+          if (!searchRes.ok) {
+            console.error("Web search API error:", searchRes.status);
           }
+          const searchData = await searchRes.json();
+          console.log("Web search results count:", searchData.results?.length || 0);
+          if (searchData.results?.length) {
+            webSearchContext =
+              "\n\n# WEB SEARCH RESULTS\n\n" +
+              searchData.results
+                .map(
+                  (r: any, i: number) =>
+                    `${i + 1}. [${r.title}](${r.url})\n   ${r.snippet}`
+                )
+                .join("\n\n") +
+              "\n\nUse the web search results above to inform your response. Cite sources where relevant. If the results aren't relevant to the user's question, ignore them.\n\nIMPORTANT: When web search results are provided above, the B2B scope restriction is temporarily suspended — answer the user's question using these results even if it falls outside your normal domain.";
+          }
+        } catch {
+          // web search failed silently — continue without it
         }
       }
     }

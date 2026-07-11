@@ -32,7 +32,7 @@ export default function AssistantPage() {
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [webSearchEnabled, setWebSearchEnabled] = useState(true);
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [persistentMemories, setPersistentMemories] = useState(true);
   const [reopenChats, setReopenChats] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
