@@ -23,6 +23,8 @@ interface Conversation {
   messages: Message[];
 }
 
+const STORAGE_KEY = "chat_conversations";
+
 const mockConversations: Conversation[] = [];
 
 export default function AssistantPage() {
@@ -44,6 +46,49 @@ export default function AssistantPage() {
       // ignore
     }
   }, []);
+
+  // Load conversations from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Rehydrate Date objects
+        const rehydrated: Conversation[] = parsed.map((c: any) => ({
+          ...c,
+          timestamp: new Date(c.timestamp),
+          messages: c.messages.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp),
+          })),
+        }));
+        setConversations(rehydrated);
+        // Restore last active conversation
+        const lastActive = localStorage.getItem("chat_active_id");
+        if (lastActive && rehydrated.some((c) => c.id === lastActive)) {
+          setActiveConvId(lastActive);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Debounced save to localStorage — skip during streaming
+  useEffect(() => {
+    if (isStreaming) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+        if (activeConvId) {
+          localStorage.setItem("chat_active_id", activeConvId);
+        }
+      } catch {
+        // storage full or unavailable — silently fail
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [conversations, activeConvId, isStreaming]);
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
   const messages = useMemo(() => activeConv?.messages || [], [activeConv]);
