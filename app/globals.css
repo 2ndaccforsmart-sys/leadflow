@@ -128,3 +128,23 @@
     @apply font-sans;
   }
 }
+
+/* ── Markdown list & spacing overrides for chat bubbles ── */
+.prose-sm ul,
+.prose-sm ol {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+.prose-sm li {
+  margin-top: 0.125em;
+  margin-bottom: 0.125em;
+}
+.prose-sm li > p {
+  margin: 0;
+}
+.prose-sm :first-child {
+  margin-top: 0;
+}
+.prose-sm :last-child {
+  margin-bottom: 0;
+}

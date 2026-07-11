@@ -8,6 +8,7 @@ import { FadeIn, FadeInStagger, FadeInStaggerItem } from "@/components/motion";
 import { getGreeting, getTimeIcon } from "@/lib/greetings";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
 
 const placeholderTexts = [
   "Dentists in Austin",
@@ -166,7 +167,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-7rem)] flex-col items-center justify-center">
+    <SpotlightCard className="flex min-h-[calc(100vh-7rem)] flex-col items-center justify-center" size={160} opacity={0.8}>
       <div className="w-full max-w-2xl space-y-12">
         <FadeIn delay={0} y={8} className="text-center">
           <p className="text-base text-muted-foreground">
@@ -260,6 +261,6 @@ export default function DashboardPage() {
           </div>
         </FadeInStagger>
       </div>
-    </div>
+    </SpotlightCard>
   );
 }

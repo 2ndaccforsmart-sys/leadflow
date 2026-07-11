@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Sparkles, Send } from "lucide-react";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { ConversationHistory } from "@/components/ai/ConversationHistory";
 import { SuggestedPrompts } from "@/components/ai/SuggestedPrompts";
 import { FadeIn } from "@/components/motion";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   id: string;
@@ -119,6 +119,8 @@ export default function AssistantPage() {
     ];
 
     setIsStreaming(true);
+    const existingConv = conversations.find((c) => c.id === currentConvId);
+    const isFirstResponse = !existingConv || existingConv.messages.length === 1;
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -197,6 +199,26 @@ export default function AssistantPage() {
           }
         }
       }
+
+      // Generate AI title on first response
+      if (isFirstResponse && assistantContent) {
+        fetch("/api/chat/title", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ firstMessage: content, responseText: assistantContent }),
+        })
+          .then((res) => res.json())
+          .then(({ title }) => {
+            if (title) {
+              setConversations((prev) =>
+                prev.map((c) =>
+                  c.id === currentConvId ? { ...c, title } : c
+                )
+              );
+            }
+          })
+          .catch(() => {});
+      }
     } catch (error) {
       console.error("Chat error:", error);
       setConversations((prev) =>
@@ -224,7 +246,7 @@ export default function AssistantPage() {
   };
 
   return (
-    <AppLayout>
+    <>
       <div className="flex h-[calc(100vh-7rem)] -m-8">
         {/* Sidebar */}
         <div className="w-64 flex-shrink-0">
@@ -344,7 +366,13 @@ export default function AssistantPage() {
                               : "bg-muted/60 text-foreground"
                           )}
                         >
-                          {message.content}
+                          {message.role === "assistant" ? (
+                            <div className="prose prose-sm dark:prose-invert max-w-none text-[14px] leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:text-[14px] [&_p]:text-[14px] [&_p]:leading-relaxed [&_p]:m-0 [&_code]:rounded [&_code]:bg-muted/80 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[13px] [&_pre]:rounded-xl [&_pre]:bg-muted/80 [&_pre]:p-4 [&_pre]:text-[13px] [&_pre]:overflow-x-auto [&_h1]:text-base [&_h2]:text-[15px] [&_h3]:text-[14px] [&_strong]:font-semibold">
+                              <ReactMarkdown>{message.content}</ReactMarkdown>
+                            </div>
+                          ) : (
+                            <>{message.content}</>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -415,6 +443,6 @@ export default function AssistantPage() {
           )}
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }

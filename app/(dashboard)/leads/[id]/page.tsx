@@ -17,7 +17,6 @@ import {
   FileText,
 } from "lucide-react";
 import Link from "next/link";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils";
 
 interface LeadData {
@@ -104,7 +103,7 @@ export default function LeadDetailPage() {
   const [saved, setSaved] = useState(false);
 
   return (
-    <AppLayout>
+    <>
       <div className="mx-auto max-w-3xl space-y-12 pb-16">
         {/* Back link */}
         <Link
@@ -257,6 +256,6 @@ export default function LeadDetailPage() {
           </div>
         </section>
       </div>
-    </AppLayout>
+    </>
   );
 }
