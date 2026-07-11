@@ -1,3 +1,3 @@
 @echo off
-cd /d "%~dp0"
+cd /d "D:\Daksh\Business\LeadFlow"
 pnpm dev

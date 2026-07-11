@@ -1,6 +1,8 @@
 "use client";
 
-import { Search, Command } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Search, Command, LogOut } from "lucide-react";
 import { RightPanelToggle } from "@/components/layout/RightContextPanel";
 import {
   DropdownMenu,
@@ -9,36 +11,109 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface TopBarProps {
   rightPanelOpen: boolean;
   onToggleRightPanel: () => void;
 }
 
+interface Profile {
+  name: string | null | undefined;
+  company_name: string | null | undefined;
+  avatar_url: string | null | undefined;
+  email: string | null;
+}
+
 export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
+  const router = useRouter();
+  const supabase = createClient();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("name, company_name, avatar_url")
+          .eq("id", user.id)
+          .single();
+
+        setProfile({
+          name: profileData?.name ?? null,
+          company_name: profileData?.company_name ?? null,
+          avatar_url: profileData?.avatar_url ?? null,
+          email: user.email ?? null,
+        });
+      }
+      setLoading(false);
+    }
+
+    fetchProfile();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async () => {
+      await fetchProfile();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
+
+  const userName = profile?.name || profile?.email?.split("@")[0] || "User";
+  const userInitial = userName.charAt(0).toUpperCase();
+  const userEmail = profile?.email || "";
+
+  if (loading) {
+    return (
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/60 bg-background/80 px-6 backdrop-blur-xl">
+        <div className="w-20" />
+        <div className="flex flex-1 justify-center">
+          <div className="relative w-full max-w-md">
+            <div className="flex h-9 w-full cursor-pointer items-center rounded-xl border border-border/60 bg-muted/30 pl-10 pr-4 text-sm text-muted-foreground" />
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5" />
+      </header>
+    );
+  }
+
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur-xl">
-      {/* Left: Brand / Logo */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-semibold tracking-tight">LeadFlow</span>
-      </div>
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/60 bg-background/80 px-6 backdrop-blur-xl">
+      {/* Left: spacer for balance */}
+      <div className="w-20" />
 
       {/* Center: Search */}
       <div className="flex flex-1 justify-center">
-        <div className="relative w-full max-w-lg">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <div className="flex h-10 cursor-text items-center rounded-xl border border-border bg-muted/40 pl-10 pr-4 text-sm text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/60 focus-within:border-ring focus-within:bg-muted/80 focus-within:ring-1 focus-within:ring-ring">
-            <span className="flex-1">Search companies, industries...</span>
-            <kbd className="flex h-5 items-center gap-0.5 rounded-md border border-border bg-background px-1.5 font-mono text-[10px] text-muted-foreground">
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+          <button
+            onClick={() => router.push("/search")}
+            className="flex h-9 w-full cursor-pointer items-center rounded-xl border border-border/60 bg-muted/30 pl-10 pr-4 text-sm text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/50 hover:shadow-sm focus-within:border-ring focus-within:bg-muted/70 focus-within:ring-1 focus-within:ring-ring"
+          >
+            <span className="flex-1 text-left">Search companies, industries...</span>
+            <kbd className="flex h-5 items-center gap-0.5 rounded-md border border-border/60 bg-background px-1.5 font-mono text-[10px] text-muted-foreground/60">
               <Command className="h-2.5 w-2.5" />K
             </kbd>
-          </div>
+          </button>
         </div>
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <RightPanelToggle
           isOpen={rightPanelOpen}
           onToggle={onToggleRightPanel}
@@ -46,33 +121,43 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger>
-            <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted/80">
+            <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-muted/60 transition-all duration-150 hover:bg-muted hover:ring-2 hover:ring-border">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-transparent text-xs font-medium text-muted-foreground">
-                  D
-                </AvatarFallback>
+                {profile?.avatar_url ? (
+                  <AvatarImage src={profile.avatar_url} alt={userName} />
+                ) : (
+                  <AvatarFallback className={cn(
+                    "bg-transparent text-xs font-medium text-muted-foreground",
+                    profile?.avatar_url ? "" : "bg-muted"
+                  )}>
+                    {userInitial}
+                  </AvatarFallback>
+                )}
               </Avatar>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-48" align="end">
-            <div className="flex items-center gap-2 px-2 py-1.5">
+            <div className="flex items-center gap-2.5 px-3 py-2.5">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-muted text-xs font-medium text-muted-foreground">
-                  D
-                </AvatarFallback>
+                {profile?.avatar_url ? (
+                  <AvatarImage src={profile.avatar_url} alt={userName} />
+                ) : (
+                  <AvatarFallback className="bg-muted text-xs font-medium text-muted-foreground">
+                    {userInitial}
+                  </AvatarFallback>
+                )}
               </Avatar>
               <div className="flex flex-col">
-                <span className="text-sm font-medium">Daksh</span>
-                <span className="text-xs text-muted-foreground">
-                  daksh@example.com
-                </span>
+                <span className="text-sm font-medium">{userName}</span>
+                <span className="text-xs text-muted-foreground">{userEmail}</span>
               </div>
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem className="text-destructive flex items-center gap-2" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

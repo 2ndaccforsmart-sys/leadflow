@@ -13,7 +13,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { isCollapsed, toggle } = useSidebar();
-  const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [rightPanelOpen, setRightPanelOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,11 +29,10 @@ export function AppLayout({ children }: AppLayoutProps) {
           rightPanelOpen={rightPanelOpen}
           onToggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
         />
-        <main className="flex-1 p-8">{children}</main>
+        <main className="flex-1 px-8 py-6">{children}</main>
       </div>
       <RightContextPanel
         isOpen={rightPanelOpen}
-        onToggle={() => setRightPanelOpen(!rightPanelOpen)}
       />
     </div>
   );

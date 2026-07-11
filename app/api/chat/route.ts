@@ -55,16 +55,19 @@ export async function POST(request: Request) {
           return;
         }
 
+        let buffer = "";
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
 
             for (const line of lines) {
-              const trimmedLine = line.replace(/^data: /, "");
+              const trimmedLine = line.replace(/^data: /, "").trim();
+              if (!trimmedLine) continue;
               if (trimmedLine === "[DONE]") {
                 controller.enqueue(encoder.encode("data: [DONE]\n\n"));
                 break;
@@ -93,7 +96,6 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        Connection: "keep-alive",
       },
     });
   } catch (error) {

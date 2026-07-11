@@ -7,12 +7,10 @@ import { cn } from "@/lib/utils";
 
 interface RightContextPanelProps {
   isOpen: boolean;
-  onToggle: () => void;
 }
 
 export function RightContextPanel({
   isOpen,
-  onToggle,
 }: RightContextPanelProps) {
   return (
     <aside

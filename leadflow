@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+cd "/d/Daksh/Business/LeadFlow"
+pnpm dev

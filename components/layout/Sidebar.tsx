@@ -29,35 +29,33 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
 
+  const handleAsideClick = (e: React.MouseEvent<HTMLElement>) => {
+    if (!isCollapsed) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    if (clickX <= 16) {
+      onToggle();
+    }
+  };
+
   return (
     <aside
+      onClick={handleAsideClick}
       className={cn(
         "fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-border bg-background transition-all duration-300 ease-in-out",
         isCollapsed ? "w-[60px]" : "w-[220px]"
       )}
     >
-      {isCollapsed && (
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggle();
-          }}
-          className="absolute right-0 top-0 z-50 h-full w-4 cursor-ew-resize transition-all hover:w-5 hover:bg-border/30"
-          title="Expand sidebar"
-        />
-      )}
-
       <div className="relative flex h-14 flex-shrink-0 items-center px-3">
-        <Link
-          href="/dashboard"
+        <button
           onClick={(e) => {
             e.stopPropagation();
             onToggle();
           }}
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-muted"
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-muted cursor-pointer"
         >
           <Zap className="h-5 w-5 text-foreground" />
-        </Link>
+        </button>
 
         {!isCollapsed && (
           <>
@@ -79,7 +77,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         )}
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 px-2 py-2">
+      <nav className="flex flex-1 flex-col gap-1 px-2.5 py-3">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -87,13 +85,13 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150",
                 isActive
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  ? "bg-muted text-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               )}
             >
-              <item.icon className="h-4 w-4 flex-shrink-0" />
+              <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
               {!isCollapsed && <span>{item.name}</span>}
             </Link>
           );
