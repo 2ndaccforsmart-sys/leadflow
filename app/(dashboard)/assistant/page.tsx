@@ -34,7 +34,6 @@ export default function AssistantPage() {
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
-  const [persistentMemories, setPersistentMemories] = useState(true);
   const [reopenChats, setReopenChats] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const emptyInputRef = useRef<HTMLDivElement>(null);
@@ -50,8 +49,6 @@ export default function AssistantPage() {
     try {
       const ws = localStorage.getItem("settings_web_search");
       if (ws !== null) setWebSearchEnabled(JSON.parse(ws));
-      const pm = localStorage.getItem("settings_persistent_memories");
-      if (pm !== null) setPersistentMemories(JSON.parse(pm));
       const rc = localStorage.getItem("settings_reopen_chats");
       if (rc !== null) setReopenChats(JSON.parse(rc));
     } catch {
@@ -61,13 +58,10 @@ export default function AssistantPage() {
 
   // Load conversations from localStorage on mount
   useEffect(() => {
-    if (!persistentMemories) return;
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      console.log("[Chat Persist] Load: STORAGE_KEY value:", stored?.slice(0, 100));
       if (stored) {
         const parsed = JSON.parse(stored);
-        console.log("[Chat Persist] Load: parsed items:", parsed.length);
         const rehydrated: Conversation[] = parsed.map((c: any) => ({
           ...c,
           timestamp: new Date(c.timestamp),
@@ -76,7 +70,6 @@ export default function AssistantPage() {
             timestamp: new Date(m.timestamp),
           })),
         }));
-        console.log("[Chat Persist] Load: rehydrated items:", rehydrated.length, "first title:", rehydrated[0]?.title);
         setConversations(rehydrated);
         // Restore last active conversation only if reopen is on
         if (reopenChats) {
@@ -85,13 +78,11 @@ export default function AssistantPage() {
             setActiveConvId(lastActive);
           }
         }
-      } else {
-        console.log("[Chat Persist] Load: no data found in localStorage");
       }
-    } catch (e) {
-      console.error("[Chat Persist] Load error:", e);
+    } catch {
+      // ignore
     }
-  }, [persistentMemories, reopenChats]);
+  }, [reopenChats]);
 
   // Immediately save conversations to localStorage when they change (not during streaming)
   useEffect(() => {
@@ -99,23 +90,20 @@ export default function AssistantPage() {
       isFirstRender.current = false;
       return;
     }
-    if (!persistentMemories) return;
     if (isStreaming) return;
     try {
-      console.log("[Chat Persist] Save: saving", conversations.length, "conversations");
       localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
       if (activeConvId && reopenChats) {
         localStorage.setItem("chat_active_id", activeConvId);
       }
-    } catch (e) {
-      console.error("[Chat Persist] Save error:", e);
+    } catch {
+      // ignore
     }
-  }, [conversations, activeConvId, isStreaming, persistentMemories, reopenChats]);
+  }, [conversations, activeConvId, isStreaming, reopenChats]);
 
   // Flush save on tab close / visibility change
   useEffect(() => {
     if (isFirstRender.current) return;
-    if (!persistentMemories) return;
     const flush = () => {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -144,7 +132,7 @@ export default function AssistantPage() {
       window.removeEventListener("beforeunload", flush);
       document.removeEventListener("visibilitychange", flush);
     };
-  }, [conversations, persistentMemories]);
+  }, [conversations]);
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
   const messages = useMemo(() => activeConv?.messages || [], [activeConv]);
