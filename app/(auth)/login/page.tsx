@@ -30,60 +30,64 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // 1. Try sign in first
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      // 1. Try sign in first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    // 2. If user doesn't exist, auto-signup
-    if (signInError) {
-      const isInvalidCredentials =
-        signInError.message.includes("Invalid login credentials") ||
-        signInError.message.includes("Invalid credentials") ||
-        signInError.status === 400;
+      // 2. If user doesn't exist, auto-signup
+      if (signInError) {
+        const isInvalidCredentials =
+          signInError.message.includes("Invalid login credentials") ||
+          signInError.message.includes("Invalid credentials") ||
+          signInError.status === 400;
 
-      if (isInvalidCredentials) {
-        // Extract name from email prefix
-        const name = email.split("@")[0] || "User";
+        if (isInvalidCredentials) {
+          // Extract name from email prefix
+          const name = email.split("@")[0] || "User";
 
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { name },
-          },
-        });
+          const { error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { name },
+            },
+          });
 
-        if (signUpError) {
-          toast.error(signUpError.message);
-          setIsLoading(false);
+          if (signUpError) {
+            toast.error(signUpError.message);
+            return;
+          }
+
+          // Explicitly sign in to guarantee the session cookie is created
+          const { error: secondSignInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (secondSignInError) {
+            toast.error(secondSignInError.message);
+            return;
+          }
+
+          toast.success("No account found. We've automatically created one for you!");
+        } else {
+          toast.error(signInError.message);
           return;
         }
-
-        // Explicitly sign in to guarantee the session cookie is created
-        const { error: secondSignInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (secondSignInError) {
-          toast.error(secondSignInError.message);
-          setIsLoading(false);
-          return;
-        }
-
-        toast.success("No account found. We've automatically created one for you!");
       } else {
-        toast.error(signInError.message);
-        setIsLoading(false);
-        return;
+        toast.success("Welcome back!");
       }
-    } else {
-      toast.success("Welcome back!");
-    }
 
-    window.location.href = redirectTo;
+      window.location.href = redirectTo;
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error(error instanceof Error ? error.message : "Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (

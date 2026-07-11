@@ -29,25 +29,41 @@ export default function RegisterPage() {
 
     const supabase = createClient();
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
-          company_name: companyName,
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            company_name: companyName,
+          },
         },
-      },
-    });
+      });
 
-    if (error) {
-      toast.error(error.message);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      // Explicitly sign in to establish session and redirect to dashboard
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        toast.error(signInError.message);
+        return;
+      }
+
+      window.location.href = "/dashboard";
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast.error(error instanceof Error ? error.message : "Something went wrong");
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    toast.success("Account created! Please check your email to verify.");
-    window.location.href = "/dashboard";
   };
 
   return (
