@@ -87,21 +87,52 @@ export default function AssistantPage() {
     }
   }, [persistentMemories, reopenChats]);
 
-  // Debounced save to localStorage — skip during streaming, skip if disabled
+  // Immediately save conversations to localStorage when they change (not during streaming)
   useEffect(() => {
-    if (!persistentMemories || isStreaming) return;
-    const timer = setTimeout(() => {
+    if (!persistentMemories) return;
+    if (isStreaming) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+      if (activeConvId && reopenChats) {
+        localStorage.setItem("chat_active_id", activeConvId);
+      }
+    } catch {
+      // storage full — silently fail
+    }
+  }, [conversations, activeConvId, persistentMemories, reopenChats]);
+
+  // Flush save on tab close / visibility change (catches the 600ms gap)
+  useEffect(() => {
+    if (!persistentMemories) return;
+    const flush = () => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
-        if (activeConvId && reopenChats) {
-          localStorage.setItem("chat_active_id", activeConvId);
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          // Merge current conversations into stored to not lose in-flight data
+          const merged = conversations.map((c) => {
+            const existing = parsed.find((p: any) => p.id === c.id);
+            return existing && existing.messages.length >= c.messages.length
+              ? existing
+              : c;
+          });
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        } else {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
         }
       } catch {
-        // storage full — silently fail
+        // ignore
       }
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [conversations, activeConvId, isStreaming, persistentMemories, reopenChats]);
+    };
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") flush();
+    });
+    return () => {
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", flush);
+    };
+  }, [conversations, persistentMemories]);
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
   const messages = useMemo(() => activeConv?.messages || [], [activeConv]);
