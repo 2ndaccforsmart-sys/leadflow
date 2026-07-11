@@ -36,12 +36,17 @@ export async function POST(request: Request) {
       }),
     });
 
-    if (!response.ok) throw new Error("Failed");
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Title API Groq error:", response.status, errorText);
+      throw new Error(`Groq API returned ${response.status}`);
+    }
     const data = await response.json();
     const title =
       data.choices?.[0]?.message?.content?.trim() || "New Chat";
     return NextResponse.json({ title });
   } catch (err) {
+    console.error("Title API error:", err);
     return NextResponse.json({ title: "New Chat" });
   }
 }

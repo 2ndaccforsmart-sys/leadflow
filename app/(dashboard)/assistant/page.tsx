@@ -296,7 +296,7 @@ export default function AssistantPage() {
         })
           .then((res) => res.json())
           .then(({ title }) => {
-            if (title) {
+            if (title && title !== "New Chat") {
               setConversations((prev) =>
                 prev.map((c) =>
                   c.id === currentConvId ? { ...c, title } : c
@@ -304,7 +304,7 @@ export default function AssistantPage() {
               );
             }
           })
-          .catch(() => {});
+          .catch((err) => console.error("Title generation failed:", err));
       }
     } catch (error) {
       console.error("Chat error:", error);

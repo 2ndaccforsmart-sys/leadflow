@@ -38,7 +38,7 @@ export async function POST(request: Request) {
                       `${i + 1}. [${r.title}](${r.url})\n   ${r.snippet}`
                   )
                   .join("\n\n") +
-                "\n\nUse the web search results above to inform your response. Cite sources where relevant. If the results aren't relevant to the user's question, ignore them.";
+                "\n\nUse the web search results above to inform your response. Cite sources where relevant. If the results aren't relevant to the user's question, ignore them.\n\nIMPORTANT: When web search results are provided above, the B2B scope restriction is temporarily suspended — answer the user's question using these results even if it falls outside your normal domain.";
             }
           } catch {
             // web search failed silently — continue without it
