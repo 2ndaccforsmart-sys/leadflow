@@ -170,20 +170,6 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel, showActivityPanel =
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1.5">
-        <div
-          className={cn(
-            "transition-all duration-100 ease-in-out",
-            showActivityPanel
-              ? "opacity-100 scale-100"
-              : "opacity-0 scale-95 pointer-events-none"
-          )}
-        >
-          <RightPanelToggle
-            isOpen={rightPanelOpen}
-            onToggle={onToggleRightPanel}
-          />
-        </div>
-
         <TooltipProvider delay={1000}>
           <Tooltip>
             <TooltipTrigger
@@ -197,6 +183,20 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel, showActivityPanel =
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+
+        <div
+          className={cn(
+            "transition-all duration-100 ease-in-out",
+            showActivityPanel
+              ? "opacity-100 scale-100"
+              : "opacity-0 scale-95 pointer-events-none"
+          )}
+        >
+          <RightPanelToggle
+            isOpen={rightPanelOpen}
+            onToggle={onToggleRightPanel}
+          />
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger>
