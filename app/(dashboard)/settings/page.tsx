@@ -1,46 +1,223 @@
-export default function SettingsPage() {
+"use client";
+
+import { useEffect, useState } from "react";
+import { ChevronDown, ChevronRight, Settings2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
+
+const NUDGE_OPTIONS = ["Off", "5m", "15m", "30m", "60m", "3h", "12h", "24h"] as const;
+
+function useSetting<T>(key: string, defaultValue: T): [T, (v: T) => void] {
+  const [value, setValue] = useState<T>(defaultValue);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored !== null) {
+        setValue(JSON.parse(stored) as T);
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, [key]);
+
+  const update = (v: T) => {
+    setValue(v);
+    localStorage.setItem(key, JSON.stringify(v));
+  };
+
+  return [value, update];
+}
+
+interface SettingRowProps {
+  label: string;
+  description: string;
+  children: React.ReactNode;
+  onDetailToggle?: () => void;
+  detailOpen?: boolean;
+}
+
+function SettingRow({ label, description, children, onDetailToggle, detailOpen }: SettingRowProps) {
   return (
-    <div className="space-y-8">
+    <div className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          {onDetailToggle && (
+            <button
+              onClick={onDetailToggle}
+              className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-pointer"
+            >
+              {detailOpen ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+            </button>
+          )}
+          <span className="text-sm font-medium text-foreground">{label}</span>
+        </div>
+        <p className="mt-0.5 text-xs text-muted-foreground/70">{description}</p>
+      </div>
+      <div className="flex-shrink-0 flex items-center">{children}</div>
+    </div>
+  );
+}
+
+function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-card">
+      <div className="px-5 py-4">
+        <h2 className="text-sm font-semibold tracking-tight text-foreground">{title}</h2>
+      </div>
+      <div className="border-t border-border/40 px-5 py-3">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function SettingsDivider() {
+  return <div className="h-px bg-border/40 my-1 last:hidden" />;
+}
+
+export default function SettingsPage() {
+  const [aiSuggestions, setAiSuggestions] = useSetting("settings_ai_suggestions", true);
+  const [aiAssistant, setAiAssistant] = useSetting("settings_ai_assistant", true);
+  const [showAiDetails, setShowAiDetails] = useState(false);
+  const [autoResearch, setAutoResearch] = useSetting("settings_auto_research", true);
+  const [emailDrafts, setEmailDrafts] = useSetting("settings_email_drafts", true);
+  const [webSearch, setWebSearch] = useSetting("settings_web_search", true);
+  const [aiNudges, setAiNudges] = useSetting<string>("settings_ai_nudges", "Off");
+  const [researchAlerts, setResearchAlerts] = useSetting("settings_research_alerts", true);
+  const [newMatchAlerts, setNewMatchAlerts] = useSetting("settings_new_match_alerts", false);
+  const [activityPanel, setActivityPanel] = useSetting("settings_activity_panel", true);
+  const [compactMode, setCompactMode] = useSetting("settings_compact_mode", false);
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6 pb-12">
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage your account preferences and configuration.
+        <p className="mt-1 text-sm text-muted-foreground/70">
+          Manage your preferences and configuration.
         </p>
       </div>
 
-      {/* Content area - empty shell */}
-      <div className="rounded-xl border border-border bg-card p-8">
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="rounded-full bg-muted p-4">
-            <svg
-              className="h-6 w-6 text-muted-foreground"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
+      {/* ── AI & Automation ── */}
+      <SectionCard title="AI & Automation">
+        <SettingRow
+          label="AI Suggestions"
+          description="Show AI-powered suggestions in search"
+          onDetailToggle={() => setShowAiDetails(!showAiDetails)}
+          detailOpen={showAiDetails}
+        >
+          <Switch checked={aiSuggestions} onCheckedChange={setAiSuggestions} />
+        </SettingRow>
+
+        {showAiDetails && (
+          <div className="ml-6 pl-3 border-l-2 border-border/40">
+            <SettingRow
+              label="AI Assistant"
+              description="Enable AI responses in the assistant tab"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-              />
-            </svg>
+              <Switch checked={aiAssistant} onCheckedChange={setAiAssistant} />
+            </SettingRow>
           </div>
-          <h3 className="mt-4 text-sm font-medium text-foreground">
-            Settings panel
-          </h3>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Account settings, preferences, and configuration options will be
-            available here.
-          </p>
+        )}
+
+        <SettingsDivider />
+
+        <SettingRow
+          label="Auto-Research"
+          description="Automatically research leads when you save them"
+        >
+          <Switch checked={autoResearch} onCheckedChange={setAutoResearch} />
+        </SettingRow>
+
+        <SettingsDivider />
+
+        <SettingRow
+          label="Email Drafts"
+          description="Auto-generate email drafts from saved lead data"
+        >
+          <Switch checked={emailDrafts} onCheckedChange={setEmailDrafts} />
+        </SettingRow>
+
+        <SettingsDivider />
+
+        <SettingRow
+          label="Web Search"
+          description="Allow the assistant to search the web for answers"
+        >
+          <Switch checked={webSearch} onCheckedChange={setWebSearch} />
+        </SettingRow>
+      </SectionCard>
+
+      {/* ── AI Nudges ── */}
+      <SectionCard title="AI Nudges">
+        <div className="flex items-center justify-between gap-4 py-1">
+          <div className="flex-1 min-w-0">
+            <span className="text-sm font-medium text-foreground">AI Nudges</span>
+            <p className="mt-0.5 text-xs text-muted-foreground/70">
+              Casual reminders to get you back to finding leads
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {NUDGE_OPTIONS.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setAiNudges(opt)}
+                className={cn(
+                  "rounded-lg px-2.5 py-1 text-xs font-medium transition-all duration-150 cursor-pointer",
+                  aiNudges === opt
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </SectionCard>
+
+      {/* ── Notifications ── */}
+      <SectionCard title="Notifications">
+        <SettingRow
+          label="Research Alerts"
+          description="Notify you when background research completes"
+        >
+          <Switch checked={researchAlerts} onCheckedChange={setResearchAlerts} />
+        </SettingRow>
+
+        <SettingsDivider />
+
+        <SettingRow
+          label="New Match Alerts"
+          description="Notify you when new leads match your searches"
+        >
+          <Switch checked={newMatchAlerts} onCheckedChange={setNewMatchAlerts} />
+        </SettingRow>
+      </SectionCard>
+
+      {/* ── Display ── */}
+      <SectionCard title="Display">
+        <SettingRow
+          label="Activity Panel"
+          description="Show the activity panel on the right side"
+        >
+          <Switch checked={activityPanel} onCheckedChange={setActivityPanel} />
+        </SettingRow>
+
+        <SettingsDivider />
+
+        <SettingRow
+          label="Compact Mode"
+          description="Reduce spacing for a denser view"
+        >
+          <Switch checked={compactMode} onCheckedChange={setCompactMode} />
+        </SettingRow>
+      </SectionCard>
     </div>
   );
 }
