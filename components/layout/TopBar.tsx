@@ -170,7 +170,7 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel, showActivityPanel =
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1.5">
-        <TooltipProvider delay={1000}>
+        <TooltipProvider delay={600}>
           <Tooltip>
             <TooltipTrigger
               onClick={() => router.push("/settings")}
