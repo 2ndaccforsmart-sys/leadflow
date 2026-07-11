@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Search, Sparkles } from "lucide-react";
 import { m, useReducedMotion } from "framer-motion";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { SearchResults } from "@/components/search/SearchResults";
 import { FadeIn, FadeInStagger, FadeInStaggerItem } from "@/components/motion";
 import { cn } from "@/lib/utils";
@@ -62,16 +61,16 @@ const mockResults = [
     name: "Barton Springs Dental",
     industry: "Cosmetic Dentistry",
     employees: "10 employees",
-    revenue: "$2.0M annual",
+    revenue: "$2.7M annual",
     location: "Austin, TX",
     website: "bartonspringsdental.com",
     aiScore: 71,
-    logoColor: "#5B21B6",
-    logoInitial: "BS",
+    logoColor: "#6D28D9",
+    logoInitial: "BD",
   },
 ];
 
-const suggestedSearches = [
+const suggestedItems = [
   { label: "Dentists", emoji: "🦷" },
   { label: "Law Firms", emoji: "⚖️" },
   { label: "Restaurants", emoji: "🍽️" },
@@ -81,66 +80,77 @@ const suggestedSearches = [
 ];
 
 export default function SearchPage() {
-  const [searchValue, setSearchValue] = useState("");
-  const [showResults, setShowResults] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<typeof mockResults>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedResult] = useState<typeof mockResults[0] | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
   const handleSearch = () => {
-    if (searchValue.trim()) {
-      setShowResults(true);
-    }
+    if (!query.trim()) return;
+    setIsSearching(true);
+    setTimeout(() => {
+      setResults(mockResults);
+      setIsSearching(false);
+    }, 800);
+  };
+
+  const handleSuggestedSearch = (label: string) => {
+    setQuery(label);
+    handleSearch();
   };
 
   return (
-    <AppLayout>
-      <div className="flex min-h-[calc(100vh-7rem)] flex-col">
-        {!showResults && (
-          <div className="flex flex-1 flex-col items-center justify-center">
-            <div className="w-full max-w-2xl space-y-10">
-              <FadeIn delay={0} y={10} className="text-center">
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  Find your next lead
+    <div className="flex flex-col min-h-[calc(100vh-7rem)]">
+      {/* Search Hero */}
+      <div className="flex flex-1 items-center justify-center px-4 py-12">
+        <div className="w-full max-w-3xl">
+          <FadeIn y={20}>
+            <div className="space-y-8">
+              <div className="text-center">
+                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+                  Find Your Next Client
                 </h1>
-                <p className="mt-2.5 text-sm text-muted-foreground/70">
-                  Search for any business, industry, or location.
+                <p className="mt-4 text-lg text-muted-foreground/70">
+                  Search by industry, location, or company name to discover qualified leads
                 </p>
-              </FadeIn>
+              </div>
 
-              <FadeIn delay={0.1} y={14}>
+              <FadeIn delay={0.1} y={10}>
                 <div className="relative">
-                  <div className="relative flex items-center rounded-2xl border border-border/60 bg-card p-2 shadow-md transition-all duration-300 hover:shadow-lg hover:border-border">
-                    <div className="flex h-12 items-center pl-4">
+                  <div
+                    className={cn(
+                      "relative flex items-center rounded-2xl border bg-card p-2 transition-all duration-300",
+                      "border-border/60 shadow-md hover:shadow-lg hover:border-border"
+                    )}
+                  >
+                    <div className="flex h-14 items-center pl-4">
                       <Search className="h-5 w-5 text-muted-foreground/60" />
                     </div>
-                    <input
-                      type="text"
-                      value={searchValue}
-                      onChange={(e) => setSearchValue(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                      placeholder="Dentists in Austin, Law firms in NYC..."
-                      className="flex-1 bg-transparent px-4 text-base outline-none placeholder:text-muted-foreground/50"
-                    />
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                        placeholder="Search companies, industries, locations..."
+                        className="w-full bg-transparent px-4 text-lg outline-none"
+                      />
+                    </div>
                     <m.button
                       onClick={handleSearch}
-                      whileHover={
-                        searchValue && !prefersReducedMotion
-                          ? { scale: 1.02 }
-                          : undefined
-                      }
-                      whileTap={
-                        searchValue && !prefersReducedMotion
-                          ? { scale: 0.98 }
-                          : undefined
-                      }
+                      disabled={!query.trim() || isSearching}
+                      whileHover={query.trim() && !isSearching && !prefersReducedMotion ? { scale: 1.02 } : undefined}
+                      whileTap={query.trim() && !isSearching && !prefersReducedMotion ? { scale: 0.98 } : undefined}
                       className={cn(
-                        "flex h-10 items-center gap-2 rounded-xl px-5 text-sm font-medium transition-all duration-200",
-                        searchValue
+                        "flex h-10 items-center gap-2 rounded-xl px-5 text-sm font-medium transition-all duration-200 cursor-pointer",
+                        query.trim() && !isSearching
                           ? "bg-primary text-primary-foreground shadow-sm hover:shadow-md"
-                          : "bg-muted text-muted-foreground"
+                          : "bg-muted text-muted-foreground cursor-not-allowed"
                       )}
                     >
                       <Sparkles className="h-4 w-4" />
-                      Search
+                      {isSearching ? "Searching..." : "Search"}
                     </m.button>
                   </div>
                 </div>
@@ -149,22 +159,17 @@ export default function SearchPage() {
               <FadeInStagger stagger={0.05} delay={0.2}>
                 <div className="flex flex-wrap items-center justify-center gap-2.5">
                   <span className="text-xs text-muted-foreground/60">Try:</span>
-                  {suggestedSearches.map((item) => (
+                  {suggestedItems.map((item) => (
                     <FadeInStaggerItem key={item.label}>
                       <m.button
-                        onClick={() => {
-                          setSearchValue(item.label.toLowerCase());
-                          setShowResults(true);
-                        }}
+                        onClick={() => handleSuggestedSearch(item.label)}
                         whileHover={
                           !prefersReducedMotion
-                            ? { scale: 1.04 }
+                            ? { scale: 1.04, borderColor: "rgba(var(--primary), 0.3)" }
                             : undefined
                         }
-                        whileTap={
-                          !prefersReducedMotion ? { scale: 0.97 } : undefined
-                        }
-                        className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3.5 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-foreground hover:shadow-sm"
+                        whileTap={!prefersReducedMotion ? { scale: 0.97 } : undefined}
+                        className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3.5 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-foreground hover:shadow-sm cursor-pointer"
                       >
                         <span>{item.emoji}</span>
                         <span>{item.label}</span>
@@ -174,52 +179,19 @@ export default function SearchPage() {
                 </div>
               </FadeInStagger>
             </div>
-          </div>
-        )}
-
-        {showResults && (
-          <div className="mx-auto w-full max-w-4xl py-6">
-            <FadeIn delay={0} y={6} className="mb-6">
-              <div className="relative">
-                <div className="flex items-center rounded-xl border border-border/60 bg-card p-2 shadow-sm transition-all duration-200 focus-within:shadow-md focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
-                  <div className="flex h-10 items-center pl-3">
-                    <Search className="h-4 w-4 text-muted-foreground/60" />
-                  </div>
-                  <input
-                    type="text"
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    placeholder="Dentists in Austin, Law firms in NYC..."
-                    className="flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground/50"
-                  />
-                  <m.button
-                    onClick={handleSearch}
-                    whileHover={!prefersReducedMotion ? { scale: 1.02 } : undefined}
-                    whileTap={!prefersReducedMotion ? { scale: 0.98 } : undefined}
-                    className={cn(
-                      "flex h-8 items-center gap-1.5 rounded-lg px-3.5 text-xs font-medium transition-all duration-200",
-                      searchValue
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Search
-                  </m.button>
-                </div>
-              </div>
-            </FadeIn>
-
-            <SearchResults
-              results={mockResults}
-              onResearch={(id) => console.log("Research:", id)}
-              onGenerateEmail={(id) => console.log("Generate email:", id)}
-              onSave={(id) => console.log("Save:", id)}
-            />
-          </div>
-        )}
+          </FadeIn>
+        </div>
       </div>
-    </AppLayout>
+
+      {/* Results */}
+      <div className="flex-1 px-4 pb-12">
+        <SearchResults
+          results={results}
+          onResearch={(id) => console.log("Research:", id)}
+          onGenerateEmail={(id) => console.log("Generate email:", id)}
+          onSave={(id) => console.log("Save:", id)}
+        />
+      </div>
+    </div>
   );
 }

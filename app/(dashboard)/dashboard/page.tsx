@@ -61,6 +61,10 @@ export default function DashboardPage() {
         const name = profileData?.name || user.email?.split("@")[0] || "User";
         const { greeting: timeGreeting, action } = getGreeting(name);
         setGreeting(`${timeGreeting} ${action}`);
+      } else {
+        // Mock user fallback for greeting when no session
+        const { greeting: timeGreeting, action } = getGreeting("Thanki");
+        setGreeting(`${timeGreeting} ${action}`);
       }
       setLoading(false);
     }
@@ -82,7 +86,9 @@ export default function DashboardPage() {
         const { greeting: timeGreeting, action } = getGreeting(name);
         setGreeting(`${timeGreeting} ${action}`);
       } else {
-        setGreeting("");
+        // Mock user fallback when no session
+        const { greeting: timeGreeting, action } = getGreeting("Thanki");
+        setGreeting(`${timeGreeting} ${action}`);
       }
       setLoading(false);
     });

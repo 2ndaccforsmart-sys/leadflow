@@ -1,6 +1,5 @@
 "use client";
 
-import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils";
 
 interface Deal {
@@ -132,25 +131,23 @@ export default function AnalyticsPage() {
   const totalValue = deals.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <AppLayout>
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex items-end justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Deal Pipeline</h1>
-            <p className="mt-1 text-sm text-muted-foreground/70">
-              {deals.length} active deals · {formatValue(totalValue)} total value
-            </p>
-          </div>
-        </div>
-
-        {/* Pipeline */}
-        <div className="flex gap-6 overflow-x-auto pb-4">
-          {dealsByStage.map(({ stage, deals: stageDeals }) => (
-            <PipelineColumn key={stage} stage={stage} deals={stageDeals} />
-          ))}
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Deal Pipeline</h1>
+          <p className="mt-1 text-sm text-muted-foreground/70">
+            {deals.length} active deals · {formatValue(totalValue)} total value
+          </p>
         </div>
       </div>
-    </AppLayout>
+
+      {/* Pipeline */}
+      <div className="flex gap-6 overflow-x-auto pb-4">
+        {dealsByStage.map(({ stage, deals: stageDeals }) => (
+          <PipelineColumn key={stage} stage={stage} deals={stageDeals} />
+        ))}
+      </div>
+    </div>
   );
 }

@@ -56,6 +56,14 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
           avatar_url: profileData?.avatar_url ?? null,
           email: user.email ?? null,
         });
+      } else {
+        // Mock user fallback when no session
+        setProfile({
+          name: "Thanki",
+          company_name: "sadsa",
+          avatar_url: null,
+          email: "2ndaccforsmart@gmail.com",
+        });
       }
       setLoading(false);
     }
@@ -80,7 +88,13 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
           email: user.email ?? null,
         });
       } else {
-        setProfile(null);
+        // Mock user fallback when no session
+        setProfile({
+          name: "Thanki",
+          company_name: "sadsa",
+          avatar_url: null,
+          email: "2ndaccforsmart@gmail.com",
+        });
       }
       setLoading(false);
     });
