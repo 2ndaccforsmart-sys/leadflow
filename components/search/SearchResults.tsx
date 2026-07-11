@@ -55,10 +55,10 @@ export function SearchResults({
           <Building2 className="h-6 w-6 text-muted-foreground/40" />
         </div>
         <h3 className="mt-4 text-sm font-medium text-foreground/80">
-          No results yet
+          No leads found
         </h3>
         <p className="mt-1 max-w-sm text-sm text-muted-foreground/60">
-          Search for a business type, industry, or location to discover leads.
+          Enter a different query or location.
         </p>
       </div>
     );

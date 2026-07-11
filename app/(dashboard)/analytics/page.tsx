@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 interface Deal {
   id: string;
@@ -8,6 +10,7 @@ interface Deal {
   value: number;
   priority: "high" | "medium" | "low";
   stage: string;
+  created_at?: string;
 }
 
 const stages = ["Lead", "Qualified", "Proposal", "Negotiation", "Closed Won"] as const;
@@ -25,21 +28,6 @@ const stageDotColors: Record<string, string> = {
   Negotiation: "bg-amber-400",
   "Closed Won": "bg-emerald-400",
 };
-
-const deals: Deal[] = [
-  { id: "1", company: "Acme Corp", value: 24000, priority: "high", stage: "Negotiation" },
-  { id: "2", company: "TechStart Inc", value: 18500, priority: "medium", stage: "Proposal" },
-  { id: "3", company: "Global Solutions", value: 42000, priority: "high", stage: "Closed Won" },
-  { id: "4", company: "Nexus Digital", value: 9800, priority: "low", stage: "Lead" },
-  { id: "5", company: "Pinnacle Labs", value: 31000, priority: "high", stage: "Qualified" },
-  { id: "6", company: "Vantage Point", value: 15200, priority: "medium", stage: "Negotiation" },
-  { id: "7", company: "Clearview AI", value: 67000, priority: "high", stage: "Proposal" },
-  { id: "8", company: "Horizon Media", value: 8400, priority: "low", stage: "Lead" },
-  { id: "9", company: "Atlas Ventures", value: 22500, priority: "medium", stage: "Qualified" },
-  { id: "10", company: "Meridian Health", value: 53000, priority: "high", stage: "Negotiation" },
-  { id: "11", company: "BlueSky Analytics", value: 12000, priority: "low", stage: "Proposal" },
-  { id: "12", company: "Summit Partners", value: 38500, priority: "medium", stage: "Closed Won" },
-];
 
 function formatValue(value: number) {
   if (value >= 1000) return `$${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`;
@@ -123,6 +111,35 @@ function PipelineColumn({
 }
 
 export default function AnalyticsPage() {
+  const supabase = createClient();
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDeals() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data, error } = await supabase
+          .from("deals")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data) {
+          setDeals(data);
+        }
+      }
+      setLoading(false);
+    }
+    fetchDeals();
+  }, [supabase]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[calc(100vh-7rem)] items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading deals...</div>
+      </div>
+    );
+  }
+
   const dealsByStage = stages.map((stage) => ({
     stage,
     deals: deals.filter((d) => d.stage === stage),
@@ -137,7 +154,9 @@ export default function AnalyticsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Deal Pipeline</h1>
           <p className="mt-1 text-sm text-muted-foreground/70">
-            {deals.length} active deals · {formatValue(totalValue)} total value
+            {deals.length === 0
+              ? "No active deals · $0 total value"
+              : `${deals.length} active deal${deals.length !== 1 ? "s" : ""} · ${formatValue(totalValue)} total value`}
           </p>
         </div>
       </div>

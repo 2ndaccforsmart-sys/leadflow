@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 interface LeadData {
   id: string;
@@ -39,68 +40,75 @@ interface LeadData {
   }[];
 }
 
-const mockLeads: Record<string, LeadData> = {
-  "1": {
-    id: "1",
-    company: "Acme Corp",
-    domain: "acmecorp.com",
-    location: "San Francisco, CA",
-    employees: "250–500",
-    founded: "2015",
-    industry: "Enterprise Software",
-    description:
-      "Acme Corp builds collaborative project management tools for distributed teams. Their platform serves over 2,000 businesses worldwide, with a focus on mid-market companies seeking to streamline cross-functional workflows.",
-    logoColor: "from-blue-500 to-indigo-600",
-    logoInitials: "AC",
-    aiSummary:
-      "Acme Corp is a growth-stage SaaS company with strong retention metrics and expanding into enterprise segments. They recently raised a Series C and are actively hiring across engineering and sales. Their tech stack suggests they may be evaluating new tools for developer productivity and internal communications — a strong fit for outbound outreach.",
-    news: [
-      {
-        title: "Acme Corp Raises $45M Series C to Expand Platform",
-        source: "TechCrunch",
-        date: "2 days ago",
-        url: "#",
-      },
-      {
-        title: "How Acme Corp Is Redefining Remote Collaboration",
-        source: "Forbes",
-        date: "1 week ago",
-        url: "#",
-      },
-      {
-        title: "Acme Corp Named in Top 50 SaaS Companies to Watch",
-        source: "SaaStr",
-        date: "3 weeks ago",
-        url: "#",
-      },
-    ],
-  },
-};
-
-function getLead(id: string): LeadData {
-  return (
-    mockLeads[id] || {
-      id,
-      company: "Company #" + id,
-      domain: "example.com",
-      location: "Unknown",
-      employees: "N/A",
-      founded: "N/A",
-      industry: "Unknown",
-      description: "No information available for this lead.",
-      logoColor: "from-slate-400 to-slate-500",
-      logoInitials: "??",
-      aiSummary: "No AI summary available.",
-      news: [],
-    }
-  );
-}
-
 export default function LeadDetailPage() {
   const params = useParams();
   const id = params?.id as string;
-  const lead = getLead(id);
+  const supabase = createClient();
+  const [lead, setLead] = useState<LeadData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    async function fetchLead() {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (!error && data) {
+        setLead({
+          id: data.id,
+          company: data.company || "Unknown",
+          domain: data.domain || "",
+          location: data.location || "",
+          employees: data.employees || "",
+          founded: data.founded || "",
+          industry: data.industry || "",
+          description: data.description || "",
+          logoColor: data.logo_color || "from-slate-400 to-slate-500",
+          logoInitials: data.logo_initials || "??",
+          aiSummary: data.ai_summary || "",
+          news: data.news || [],
+        });
+      }
+      setLoading(false);
+    }
+    fetchLead();
+  }, [id, supabase]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[calc(100vh-7rem)] items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading lead...</div>
+      </div>
+    );
+  }
+
+  if (!lead) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-8 pb-16 pt-12">
+        <Link
+          href="/search"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground/60 transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to search
+        </Link>
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="rounded-full bg-muted/60 p-4">
+            <Building2 className="h-6 w-6 text-muted-foreground/40" />
+          </div>
+          <h3 className="mt-4 text-sm font-medium text-foreground/80">
+            Lead not found
+          </h3>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground/60">
+            This lead does not exist or may have been removed.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -190,27 +198,29 @@ export default function LeadDetailPage() {
           </div>
           <div className="rounded-2xl border border-border/50 bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
             <p className="text-[15px] leading-[1.7] text-muted-foreground/80">
-              {lead.description}
+              {lead.description || "No description available."}
             </p>
           </div>
         </section>
 
         {/* ─── AI Summary ─── */}
-        <section>
-          <div className="flex items-center gap-2.5 pb-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
+        {lead.aiSummary && (
+          <section>
+            <div className="flex items-center gap-2.5 pb-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <h2 className="text-base font-semibold text-foreground">
+                AI Summary
+              </h2>
             </div>
-            <h2 className="text-base font-semibold text-foreground">
-              AI Summary
-            </h2>
-          </div>
-          <div className="rounded-2xl border border-primary/10 bg-primary/[0.03] p-5">
-            <p className="text-[15px] leading-[1.7] text-foreground/75">
-              {lead.aiSummary}
-            </p>
-          </div>
-        </section>
+            <div className="rounded-2xl border border-primary/10 bg-primary/[0.03] p-5">
+              <p className="text-[15px] leading-[1.7] text-foreground/75">
+                {lead.aiSummary}
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* ─── Recent News ─── */}
         <section>
@@ -246,7 +256,7 @@ export default function LeadDetailPage() {
               </a>
             ))}
 
-            {lead.news.length === 0 && (
+            {(!lead.news || lead.news.length === 0) && (
               <div className="rounded-2xl border border-dashed border-border/40 py-10 text-center">
                 <p className="text-sm text-muted-foreground/40">
                   No recent news found

@@ -7,69 +7,6 @@ import { SearchResults } from "@/components/search/SearchResults";
 import { FadeIn, FadeInStagger, FadeInStaggerItem } from "@/components/motion";
 import { cn } from "@/lib/utils";
 
-const mockResults = [
-  {
-    id: "1",
-    name: "Smile Bright Dental",
-    industry: "Dental Practice",
-    employees: "12 employees",
-    revenue: "$2.4M annual",
-    location: "Austin, TX",
-    website: "smilebrightdental.com",
-    aiScore: 94,
-    logoColor: "#6366F1",
-    logoInitial: "SB",
-  },
-  {
-    id: "2",
-    name: "ClearView Orthodontics",
-    industry: "Orthodontics",
-    employees: "8 employees",
-    revenue: "$1.8M annual",
-    location: "Austin, TX",
-    website: "clearviewortho.com",
-    aiScore: 88,
-    logoColor: "#8B5CF6",
-    logoInitial: "CV",
-  },
-  {
-    id: "3",
-    name: "Pecan Street Dental",
-    industry: "General Dentistry",
-    employees: "15 employees",
-    revenue: "$3.1M annual",
-    location: "Austin, TX",
-    website: "pecanstreetdental.com",
-    aiScore: 82,
-    logoColor: "#A78BFA",
-    logoInitial: "PS",
-  },
-  {
-    id: "4",
-    name: "Lone Star Oral Surgery",
-    industry: "Oral Surgery",
-    employees: "6 employees",
-    revenue: "$1.2M annual",
-    location: "Austin, TX",
-    website: "lonestaroral.com",
-    aiScore: 76,
-    logoColor: "#7C3AED",
-    logoInitial: "LS",
-  },
-  {
-    id: "5",
-    name: "Barton Springs Dental",
-    industry: "Cosmetic Dentistry",
-    employees: "10 employees",
-    revenue: "$2.7M annual",
-    location: "Austin, TX",
-    website: "bartonspringsdental.com",
-    aiScore: 71,
-    logoColor: "#6D28D9",
-    logoInitial: "BD",
-  },
-];
-
 const suggestedItems = [
   { label: "Dentists", emoji: "🦷" },
   { label: "Law Firms", emoji: "⚖️" },
@@ -81,18 +18,18 @@ const suggestedItems = [
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<typeof mockResults>([]);
+  const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedResult] = useState<typeof mockResults[0] | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
   const handleSearch = () => {
     if (!query.trim()) return;
+    // No external search API connected yet — show empty results
     setIsSearching(true);
     setTimeout(() => {
-      setResults(mockResults);
+      setResults([]);
       setIsSearching(false);
-    }, 800);
+    }, 400);
   };
 
   const handleSuggestedSearch = (label: string) => {
