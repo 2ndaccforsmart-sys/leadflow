@@ -47,7 +47,7 @@ export function AINudgeProvider({ userName }: { userName?: string }) {
       const fire = () => {
         const greeting = userName ? `Hey ${userName}, ` : "";
         toast(greeting + getRandomMessage(), {
-          icon: <Sparkles className="h-4 w-4 text-emerald-500" />,
+          icon: <Sparkles className="h-4 w-4 text-muted-foreground" />,
         });
       };
 
