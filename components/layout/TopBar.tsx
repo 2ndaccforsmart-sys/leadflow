@@ -184,19 +184,14 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel, showActivityPanel =
           </Tooltip>
         </TooltipProvider>
 
-        <div
-          className={cn(
-            "transition-all duration-100 ease-in-out",
-            showActivityPanel
-              ? "opacity-100 scale-100"
-              : "opacity-0 scale-95 pointer-events-none"
-          )}
-        >
-          <RightPanelToggle
-            isOpen={rightPanelOpen}
-            onToggle={onToggleRightPanel}
-          />
-        </div>
+        {showActivityPanel && (
+          <div className="transition-all duration-100 ease-in-out opacity-100 scale-100">
+            <RightPanelToggle
+              isOpen={rightPanelOpen}
+              onToggle={onToggleRightPanel}
+            />
+          </div>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger>
