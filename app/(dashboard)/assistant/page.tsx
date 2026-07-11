@@ -64,8 +64,10 @@ export default function AssistantPage() {
     if (!persistentMemories) return;
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
+      console.log("[Chat Persist] Load: STORAGE_KEY value:", stored?.slice(0, 100));
       if (stored) {
         const parsed = JSON.parse(stored);
+        console.log("[Chat Persist] Load: parsed items:", parsed.length);
         const rehydrated: Conversation[] = parsed.map((c: any) => ({
           ...c,
           timestamp: new Date(c.timestamp),
@@ -74,6 +76,7 @@ export default function AssistantPage() {
             timestamp: new Date(m.timestamp),
           })),
         }));
+        console.log("[Chat Persist] Load: rehydrated items:", rehydrated.length, "first title:", rehydrated[0]?.title);
         setConversations(rehydrated);
         // Restore last active conversation only if reopen is on
         if (reopenChats) {
@@ -82,9 +85,11 @@ export default function AssistantPage() {
             setActiveConvId(lastActive);
           }
         }
+      } else {
+        console.log("[Chat Persist] Load: no data found in localStorage");
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("[Chat Persist] Load error:", e);
     }
   }, [persistentMemories, reopenChats]);
 
@@ -97,12 +102,13 @@ export default function AssistantPage() {
     if (!persistentMemories) return;
     if (isStreaming) return;
     try {
+      console.log("[Chat Persist] Save: saving", conversations.length, "conversations");
       localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
       if (activeConvId && reopenChats) {
         localStorage.setItem("chat_active_id", activeConvId);
       }
-    } catch {
-      // storage full — silently fail
+    } catch (e) {
+      console.error("[Chat Persist] Save error:", e);
     }
   }, [conversations, activeConvId, isStreaming, persistentMemories, reopenChats]);
 
