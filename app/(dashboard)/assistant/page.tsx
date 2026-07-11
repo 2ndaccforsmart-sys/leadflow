@@ -99,7 +99,7 @@ export default function AssistantPage() {
     } catch {
       // storage full — silently fail
     }
-  }, [conversations, activeConvId, persistentMemories, reopenChats]);
+  }, [conversations, activeConvId, isStreaming, persistentMemories, reopenChats]);
 
   // Flush save on tab close / visibility change (catches the 600ms gap)
   useEffect(() => {
