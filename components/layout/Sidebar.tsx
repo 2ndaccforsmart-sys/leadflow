@@ -12,13 +12,18 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Assistant", href: "/assistant", icon: Sparkles },
   { name: "Search", href: "/search", icon: Search },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 interface SidebarProps {
@@ -102,6 +107,32 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           );
         })}
       </nav>
+
+      {/* Settings — bottom of activity panel */}
+      <TooltipProvider delay={400}>
+        <div className="border-t border-border px-2.5 py-2">
+          <Tooltip>
+            <TooltipTrigger
+              onClick={() => router.push("/settings")}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 cursor-pointer",
+                pathname === "/settings"
+                  ? "bg-muted text-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+              )}
+            >
+              <Settings className="h-[18px] w-[18px] flex-shrink-0" />
+              {!isCollapsed && <span>Settings</span>}
+            </TooltipTrigger>
+            {isCollapsed && (
+              <TooltipContent side="right" sideOffset={12}>
+                <Settings className="h-3.5 w-3.5" />
+                <span>Settings</span>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </div>
+      </TooltipProvider>
     </aside>
   );
 }
