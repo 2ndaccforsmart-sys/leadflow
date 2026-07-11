@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { Sparkles, Send } from "lucide-react";
 import { ConversationHistory } from "@/components/ai/ConversationHistory";
 import { SuggestedPrompts } from "@/components/ai/SuggestedPrompts";
+import { CommandDropup, SLASH_COMMANDS } from "@/components/ai/CommandDropup";
 import { FadeIn } from "@/components/motion";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -36,6 +37,12 @@ export default function AssistantPage() {
   const [persistentMemories, setPersistentMemories] = useState(true);
   const [reopenChats, setReopenChats] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const emptyInputRef = useRef<HTMLDivElement>(null);
+  const convInputRef = useRef<HTMLDivElement>(null);
+
+  const handleCommandSelect = (command: string) => {
+    setInputValue(command);
+  };
 
   // Read settings from localStorage
   useEffect(() => {
@@ -388,7 +395,12 @@ export default function AssistantPage() {
                 </FadeIn>
 
                 <FadeIn delay={0.2} y={14}>
-                  <div className="relative">
+                  <div className="relative" ref={emptyInputRef}>
+                    <CommandDropup
+                      text={inputValue}
+                      onSelect={handleCommandSelect}
+                      anchorRef={emptyInputRef}
+                    />
                     <textarea
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
@@ -496,7 +508,12 @@ export default function AssistantPage() {
               {/* Input */}
               <div className="border-t border-border/40 bg-background/80 px-4 py-3.5 backdrop-blur-sm">
                 <div className="mx-auto max-w-3xl">
-                  <div className="relative">
+                  <div className="relative" ref={convInputRef}>
+                    <CommandDropup
+                      text={inputValue}
+                      onSelect={handleCommandSelect}
+                      anchorRef={convInputRef}
+                    />
                     <textarea
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
