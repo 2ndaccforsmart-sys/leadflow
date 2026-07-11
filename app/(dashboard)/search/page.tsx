@@ -42,7 +42,7 @@ export default function SearchPage() {
         <div className="w-full max-w-3xl">
           <div className="space-y-8">
             <div
-              className="text-center animate-in fade-in slide-in-from-bottom-4 duration-700"
+              className="text-center animate-in fade-in duration-200"
             >
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
                 Find Your Next Client
@@ -53,8 +53,8 @@ export default function SearchPage() {
             </div>
 
             <div
-              className="animate-in fade-in slide-in-from-bottom-4 duration-700"
-              style={{ animationDelay: "100ms", animationFillMode: "both" }}
+              className="animate-in fade-in duration-200"
+              style={{ animationDelay: "30ms", animationFillMode: "both" }}
             >
               <div className="relative">
                 <div
@@ -94,8 +94,8 @@ export default function SearchPage() {
             </div>
 
             <div
-              className="animate-in fade-in slide-in-from-bottom-4 duration-700"
-              style={{ animationDelay: "200ms", animationFillMode: "both" }}
+              className="animate-in fade-in duration-200"
+              style={{ animationDelay: "60ms", animationFillMode: "both" }}
             >
               <div className="flex flex-wrap items-center justify-center gap-2.5">
                 <span className="text-xs text-muted-foreground/60">Try:</span>
@@ -104,7 +104,7 @@ export default function SearchPage() {
                     key={item.label}
                     onClick={() => handleSuggestedSearch(item.label)}
                     className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3.5 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-foreground hover:shadow-sm hover:scale-105 active:scale-[0.97] cursor-pointer"
-                    style={{ animationDelay: `${250 + i * 50}ms`, animationFillMode: "both" }}
+                    style={{ animationDelay: `${70 + i * 20}ms`, animationFillMode: "both" }}
                   >
                     <span>{item.emoji}</span>
                     <span>{item.label}</span>
