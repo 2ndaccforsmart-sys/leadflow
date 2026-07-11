@@ -17,14 +17,20 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [showActivityPanel, setShowActivityPanel] = useState(true);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("settings_activity_panel");
-      if (stored !== null) {
-        setShowActivityPanel(JSON.parse(stored));
+    const checkSetting = () => {
+      try {
+        const stored = localStorage.getItem("settings_activity_panel");
+        if (stored !== null) {
+          setShowActivityPanel(JSON.parse(stored));
+        }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
+    };
+
+    checkSetting();
+    const id = setInterval(checkSetting, 500);
+    return () => clearInterval(id);
   }, []);
 
   return (
