@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Command, LogOut } from "lucide-react";
+import { Search, Command, LogOut, Settings } from "lucide-react";
 import { RightPanelToggle } from "@/components/layout/RightContextPanel";
 import {
   DropdownMenu,
@@ -14,6 +14,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
 interface TopBarProps {
   rightPanelOpen: boolean;
@@ -177,6 +183,20 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel, showActivityPanel =
             onToggle={onToggleRightPanel}
           />
         </div>
+
+        <TooltipProvider delay={1000}>
+          <Tooltip>
+            <TooltipTrigger
+              onClick={() => router.push("/settings")}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Settings className="h-[18px] w-[18px]" />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" sideOffset={8}>
+              <span>Configure</span>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
         <DropdownMenu>
           <DropdownMenuTrigger>
