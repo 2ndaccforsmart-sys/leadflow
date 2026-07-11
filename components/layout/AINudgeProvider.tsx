@@ -30,7 +30,6 @@ function getRandomMessage(): string {
 export function AINudgeProvider({ userName }: { userName?: string }) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeRef = useRef(false);
 
   const clearAll = useCallback(() => {
     if (timeoutRef.current) {
@@ -41,13 +40,10 @@ export function AINudgeProvider({ userName }: { userName?: string }) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    activeRef.current = false;
   }, []);
 
   const startNudges = useCallback(
     (ms: number) => {
-      if (activeRef.current) return;
-
       const fire = () => {
         const greeting = userName ? `Hey ${userName}, ` : "";
         toast(greeting + getRandomMessage(), {
@@ -55,11 +51,10 @@ export function AINudgeProvider({ userName }: { userName?: string }) {
         });
       };
 
-      // First nudge after a random offset
+      // First nudge after a random offset so it's not immediate
       const initialDelay = Math.random() * ms * 0.3;
       timeoutRef.current = setTimeout(() => {
         fire();
-        activeRef.current = true;
         intervalRef.current = setInterval(fire, ms);
       }, initialDelay);
     },
@@ -85,23 +80,12 @@ export function AINudgeProvider({ userName }: { userName?: string }) {
       startNudges(ms);
     };
 
-    // Listen for visibility changes — pause when tab hidden
-    const onVisibility = () => {
-      if (document.hidden) {
-        clearAll();
-      } else {
-        schedule();
-      }
-    };
-
-    document.addEventListener("visibilitychange", onVisibility);
     schedule();
 
-    // Poll for setting changes
+    // Poll for setting changes every 2s
     const pollId = setInterval(schedule, 2000);
 
     return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
       clearInterval(pollId);
       clearAll();
     };
