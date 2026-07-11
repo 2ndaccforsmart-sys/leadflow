@@ -25,10 +25,15 @@ export async function POST(request: Request) {
         const cleaned = query.replace(/^\/web-search\s*/i, "").trim();
         if (cleaned) {
           try {
+            console.log("Web search triggered for:", cleaned);
             const searchRes = await fetch(
               `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/web-search?q=${encodeURIComponent(cleaned)}`
             );
+            if (!searchRes.ok) {
+              console.error("Web search API error:", searchRes.status);
+            }
             const searchData = await searchRes.json();
+            console.log("Web search results count:", searchData.results?.length || 0);
             if (searchData.results?.length) {
               webSearchContext =
                 "\n\n# WEB SEARCH RESULTS\n\n" +

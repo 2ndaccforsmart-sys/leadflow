@@ -32,7 +32,7 @@ export default function AssistantPage() {
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [webSearchEnabled, setWebSearchEnabled] = useState(true);
   const [persistentMemories, setPersistentMemories] = useState(true);
   const [reopenChats, setReopenChats] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -304,7 +304,22 @@ export default function AssistantPage() {
               );
             }
           })
-          .catch((err) => console.error("Title generation failed:", err));
+          .catch((err) => {
+            console.error("Title generation failed:", err);
+            // Fallback: use first message as title
+            setConversations((prev) =>
+              prev.map((c) =>
+                c.id === currentConvId
+                  ? {
+                      ...c,
+                      title:
+                        cleanContent.slice(0, 40) +
+                        (cleanContent.length > 40 ? "..." : ""),
+                    }
+                  : c
+              )
+            );
+          });
       }
     } catch (error) {
       console.error("Chat error:", error);
