@@ -39,6 +39,7 @@ export default function AssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const emptyInputRef = useRef<HTMLDivElement>(null);
   const convInputRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
 
   const handleCommandSelect = (command: string) => {
     setInputValue(command);
@@ -89,6 +90,10 @@ export default function AssistantPage() {
 
   // Immediately save conversations to localStorage when they change (not during streaming)
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     if (!persistentMemories) return;
     if (isStreaming) return;
     try {
@@ -101,8 +106,9 @@ export default function AssistantPage() {
     }
   }, [conversations, activeConvId, isStreaming, persistentMemories, reopenChats]);
 
-  // Flush save on tab close / visibility change (catches the 600ms gap)
+  // Flush save on tab close / visibility change
   useEffect(() => {
+    if (isFirstRender.current) return;
     if (!persistentMemories) return;
     const flush = () => {
       try {
