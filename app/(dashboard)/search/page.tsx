@@ -42,7 +42,7 @@ export default function SearchPage() {
         <div className="w-full max-w-3xl">
           <div className="space-y-8">
             <div
-              className="text-center animate-in fade-in duration-200"
+              className="text-center animate-in fade-in zoom-in-95 duration-300"
             >
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
                 Find Your Next Client
@@ -53,7 +53,7 @@ export default function SearchPage() {
             </div>
 
             <div
-              className="animate-in fade-in duration-200"
+              className="animate-in fade-in zoom-in-95 duration-300"
               style={{ animationDelay: "30ms", animationFillMode: "both" }}
             >
               <div className="relative">
@@ -94,7 +94,7 @@ export default function SearchPage() {
             </div>
 
             <div
-              className="animate-in fade-in duration-200"
+              className="animate-in fade-in zoom-in-95 duration-300"
               style={{ animationDelay: "60ms", animationFillMode: "both" }}
             >
               <div className="flex flex-wrap items-center justify-center gap-2.5">

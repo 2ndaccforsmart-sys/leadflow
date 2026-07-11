@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Search, Command, LogOut } from "lucide-react";
 import { RightPanelToggle } from "@/components/layout/RightContextPanel";
 import {
@@ -33,6 +32,7 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
   const supabase = createClient();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [clickingSearch, setClickingSearch] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -113,6 +113,13 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
   const userInitial = userName.charAt(0).toUpperCase();
   const userEmail = profile?.email || "";
 
+  const handleSearchNav = () => {
+    setClickingSearch(true);
+    setTimeout(() => {
+      router.push("/search");
+    }, 180);
+  };
+
   if (loading) {
     return (
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/60 bg-background/80 px-6 backdrop-blur-xl">
@@ -136,15 +143,21 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
       <div className="flex flex-1 justify-center">
         <div className="relative w-full max-w-md">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60 pointer-events-none z-10" />
-          <Link
-            href="/search"
-            className="flex h-9 w-full items-center rounded-xl border border-border/60 bg-muted/30 pl-10 pr-4 text-sm text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/50 hover:shadow-sm"
+          <button
+            onClick={handleSearchNav}
+            disabled={clickingSearch}
+            className={cn(
+              "flex h-9 w-full items-center rounded-xl border pl-10 pr-4 text-sm text-muted-foreground transition-all duration-150",
+              clickingSearch
+                ? "scale-95 border-primary/40 bg-primary/5 shadow-lg"
+                : "border-border/60 bg-muted/30 hover:border-border hover:bg-muted/50 hover:shadow-sm"
+            )}
           >
             <span className="flex-1 text-left">Search companies, industries...</span>
             <kbd className="flex h-5 items-center gap-0.5 rounded-md border border-border/60 bg-background px-1.5 font-mono text-[10px] text-muted-foreground/60">
               <Command className="h-2.5 w-2.5" />K
             </kbd>
-          </Link>
+          </button>
         </div>
       </div>
 
