@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 interface TopBarProps {
   rightPanelOpen: boolean;
   onToggleRightPanel: () => void;
+  showActivityPanel?: boolean;
 }
 
 interface Profile {
@@ -27,7 +28,7 @@ interface Profile {
   email: string | null;
 }
 
-export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
+export function TopBar({ rightPanelOpen, onToggleRightPanel, showActivityPanel = true }: TopBarProps) {
   const router = useRouter();
   const supabase = createClient();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -163,10 +164,12 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1.5">
-        <RightPanelToggle
-          isOpen={rightPanelOpen}
-          onToggle={onToggleRightPanel}
-        />
+        {showActivityPanel && (
+          <RightPanelToggle
+            isOpen={rightPanelOpen}
+            onToggle={onToggleRightPanel}
+          />
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger>
