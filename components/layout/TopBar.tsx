@@ -35,11 +35,15 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
 
   useEffect(() => {
     async function fetchProfile() {
+      // First, try getSession() - reads from localStorage instantly (no network)
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (user) {
+      if (session?.user) {
+        const user = session.user;
+
+        // Then fetch profile from database
         const { data: profileData } = await supabase
           .from("profiles")
           .select("name, company_name, avatar_url")
@@ -60,8 +64,25 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async () => {
-      await fetchProfile();
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const user = session.user;
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("name, company_name, avatar_url")
+          .eq("id", user.id)
+          .single();
+
+        setProfile({
+          name: profileData?.name ?? null,
+          company_name: profileData?.company_name ?? null,
+          avatar_url: profileData?.avatar_url ?? null,
+          email: user.email ?? null,
+        });
+      } else {
+        setProfile(null);
+      }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
