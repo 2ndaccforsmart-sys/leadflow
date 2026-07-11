@@ -30,10 +30,42 @@ export default function AssistantPage() {
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Read web search setting from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("settings_web_search");
+      if (stored !== null) {
+        setWebSearchEnabled(JSON.parse(stored));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
   const messages = useMemo(() => activeConv?.messages || [], [activeConv]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const val = inputValue;
+
+    // /web-search autocomplete on Tab or Enter
+    if ((e.key === "Tab" || e.key === "Enter") && /^\/web(-[a-z]*)?$/i.test(val)) {
+      e.preventDefault();
+      setInputValue("/web-search ");
+      return;
+    }
+
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (val.trim() && !isStreaming) {
+        handleSendMessage(val.trim());
+        setInputValue("");
+      }
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -69,17 +101,21 @@ export default function AssistantPage() {
   const handleSendMessage = async (content: string) => {
     let currentConvId = activeConvId;
 
+    // Detect /web-search prefix
+    const isWebSearch = webSearchEnabled || content.startsWith("/web-search");
+    const cleanContent = content.replace(/^\/web-search\s*/i, "").trim() || content;
+
     if (!currentConvId) {
       const newConv: Conversation = {
         id: Date.now().toString(),
-        title: content.slice(0, 40) + (content.length > 40 ? "..." : ""),
-        lastMessage: content,
+        title: cleanContent.slice(0, 40) + (cleanContent.length > 40 ? "..." : ""),
+        lastMessage: cleanContent,
         timestamp: new Date(),
         messages: [
           {
             id: Date.now().toString(),
             role: "user",
-            content,
+            content: cleanContent,
             timestamp: new Date(),
           },
         ],
@@ -94,13 +130,13 @@ export default function AssistantPage() {
             const newMessage: Message = {
               id: Date.now().toString(),
               role: "user",
-              content,
+              content: cleanContent,
               timestamp: new Date(),
             };
             return {
               ...c,
               messages: [...c.messages, newMessage],
-              lastMessage: content,
+              lastMessage: cleanContent,
               timestamp: new Date(),
             };
           }
@@ -115,7 +151,7 @@ export default function AssistantPage() {
         role: m.role,
         content: m.content,
       })),
-      { role: "user" as const, content },
+      { role: "user" as const, content: cleanContent },
     ];
 
     setIsStreaming(true);
@@ -125,7 +161,7 @@ export default function AssistantPage() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, webSearch: isWebSearch }),
       });
 
       if (!response.ok) {
@@ -205,7 +241,7 @@ export default function AssistantPage() {
         fetch("/api/chat/title", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ firstMessage: content, responseText: assistantContent }),
+          body: JSON.stringify({ firstMessage: cleanContent, responseText: assistantContent }),
         })
           .then((res) => res.json())
           .then(({ title }) => {
@@ -287,15 +323,7 @@ export default function AssistantPage() {
                     <textarea
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          if (inputValue.trim() && !isStreaming) {
-                            handleSendMessage(inputValue.trim());
-                            setInputValue("");
-                          }
-                        }
-                      }}
+                      onKeyDown={handleKeyDown}
                       placeholder="Ask about your leads..."
                       rows={1}
                       className="w-full resize-none rounded-xl border border-border/60 bg-card px-4 py-3 pr-12 text-sm shadow-[0_1px_3px_rgba(0,0,0,0.04)] outline-none transition-all duration-150 placeholder:text-muted-foreground/50 focus:border-ring focus:bg-muted/30 focus:ring-1 focus:ring-ring"
@@ -403,15 +431,7 @@ export default function AssistantPage() {
                     <textarea
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          if (inputValue.trim() && !isStreaming) {
-                            handleSendMessage(inputValue.trim());
-                            setInputValue("");
-                          }
-                        }
-                      }}
+                      onKeyDown={handleKeyDown}
                       placeholder="Ask about your leads..."
                       rows={1}
                       className="w-full resize-none rounded-xl border border-border/60 bg-muted/30 px-4 py-3 pr-12 text-sm outline-none transition-all duration-150 placeholder:text-muted-foreground/50 focus:border-ring focus:bg-muted/50 focus:ring-1 focus:ring-ring"

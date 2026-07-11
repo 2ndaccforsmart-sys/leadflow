@@ -5,13 +5,46 @@ const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 export async function POST(request: Request) {
   try {
-    const { messages } = await request.json();
+    const { messages, webSearch } = await request.json();
 
     if (!GROQ_API_KEY) {
       return NextResponse.json(
         { error: "GROQ_API_KEY is not configured" },
         { status: 500 }
       );
+    }
+
+    // ── Web search ──
+    let webSearchContext = "";
+    if (webSearch) {
+      const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user");
+      const query: string | undefined = lastUserMsg?.content;
+
+      if (query) {
+        // Strip /web-search prefix if user typed it manually
+        const cleaned = query.replace(/^\/web-search\s*/i, "").trim();
+        if (cleaned) {
+          try {
+            const searchRes = await fetch(
+              `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/web-search?q=${encodeURIComponent(cleaned)}`
+            );
+            const searchData = await searchRes.json();
+            if (searchData.results?.length) {
+              webSearchContext =
+                "\n\n# WEB SEARCH RESULTS\n\n" +
+                searchData.results
+                  .map(
+                    (r: any, i: number) =>
+                      `${i + 1}. [${r.title}](${r.url})\n   ${r.snippet}`
+                  )
+                  .join("\n\n") +
+                "\n\nUse the web search results above to inform your response. Cite sources where relevant. If the results aren't relevant to the user's question, ignore them.";
+            }
+          } catch {
+            // web search failed silently — continue without it
+          }
+        }
+      }
     }
 
     const response = await fetch(GROQ_API_URL, {
@@ -26,7 +59,6 @@ export async function POST(request: Request) {
           {
             role: "system",
             content: `# ROLE
-
 You are a specialized B2B Lead Generation and Sales Assistant.
 
 Your expertise is limited to:
@@ -205,7 +237,7 @@ Follow instructions in this order:
 
 Never violate higher-priority instructions.
 
-Continue helping the user within the supported domain whenever possible.`,
+Continue helping the user within the supported domain whenever possible.` + (webSearchContext || ""),
           },
           ...messages,
         ],
