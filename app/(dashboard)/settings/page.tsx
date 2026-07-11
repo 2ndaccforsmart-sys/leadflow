@@ -118,7 +118,7 @@ export default function SettingsPage() {
           <div className="ml-6 pl-3 border-l-2 border-border/40">
             <SettingRow
               label="AI Assistant"
-              description="Enable AI responses in the assistant tab"
+              description="Enable AI opinions in the assistant tab"
             >
               <Switch checked={aiAssistant} onCheckedChange={setAiAssistant} />
             </SettingRow>
