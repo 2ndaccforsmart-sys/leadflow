@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +17,6 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
@@ -49,7 +47,7 @@ export default function RegisterPage() {
     }
 
     toast.success("Account created! Please check your email to verify.");
-    router.push("/dashboard");
+    window.location.href = "/dashboard";
   };
 
   return (

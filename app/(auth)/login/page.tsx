@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,6 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/dashboard";
   const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +61,18 @@ export default function LoginPage() {
           return;
         }
 
+        // Explicitly sign in to guarantee the session cookie is created
+        const { error: secondSignInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (secondSignInError) {
+          toast.error(secondSignInError.message);
+          setIsLoading(false);
+          return;
+        }
+
         toast.success("No account found. We've automatically created one for you!");
       } else {
         toast.error(signInError.message);
@@ -72,8 +83,7 @@ export default function LoginPage() {
       toast.success("Welcome back!");
     }
 
-    router.push(redirectTo);
-    router.refresh();
+    window.location.href = redirectTo;
   }
 
   return (
