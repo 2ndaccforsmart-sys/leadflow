@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Search, Sparkles } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { SearchResults } from "@/components/search/SearchResults";
 import { cn } from "@/lib/utils";
 
@@ -14,11 +15,26 @@ const suggestedItems = [
   { label: "Clinics", emoji: "🏥" },
 ];
 
-export default function SearchPage() {
+function SearchPageContent() {
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+
+  // On mount, read ?q= from URL and auto-search
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q?.trim()) {
+      setQuery(q.trim());
+      setIsSearching(true);
+      setHasSearched(true);
+      setTimeout(() => {
+        setResults([]);
+        setIsSearching(false);
+      }, 400);
+    }
+  }, []);
 
   const handleSearch = () => {
     if (!query.trim()) return;
@@ -128,5 +144,13 @@ export default function SearchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[calc(100vh-7rem)] items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
