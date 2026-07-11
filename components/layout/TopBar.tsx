@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Search, Command, LogOut } from "lucide-react";
 import { RightPanelToggle } from "@/components/layout/RightContextPanel";
 import {
@@ -134,16 +135,16 @@ export function TopBar({ rightPanelOpen, onToggleRightPanel }: TopBarProps) {
       {/* Center: Search */}
       <div className="flex flex-1 justify-center">
         <div className="relative w-full max-w-md">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
-          <button
-            onClick={() => router.push("/search")}
-            className="flex h-9 w-full cursor-pointer items-center rounded-xl border border-border/60 bg-muted/30 pl-10 pr-4 text-sm text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/50 hover:shadow-sm focus-within:border-ring focus-within:bg-muted/70 focus-within:ring-1 focus-within:ring-ring"
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60 pointer-events-none z-10" />
+          <Link
+            href="/search"
+            className="flex h-9 w-full items-center rounded-xl border border-border/60 bg-muted/30 pl-10 pr-4 text-sm text-muted-foreground transition-all duration-200 hover:border-border hover:bg-muted/50 hover:shadow-sm"
           >
             <span className="flex-1 text-left">Search companies, industries...</span>
             <kbd className="flex h-5 items-center gap-0.5 rounded-md border border-border/60 bg-background px-1.5 font-mono text-[10px] text-muted-foreground/60">
               <Command className="h-2.5 w-2.5" />K
             </kbd>
-          </button>
+          </Link>
         </div>
       </div>
 

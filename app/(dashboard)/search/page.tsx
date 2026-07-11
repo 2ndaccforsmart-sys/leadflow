@@ -20,12 +20,13 @@ export default function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
   const handleSearch = () => {
     if (!query.trim()) return;
-    // No external search API connected yet — show empty results
     setIsSearching(true);
+    setHasSearched(true);
     setTimeout(() => {
       setResults([]);
       setIsSearching(false);
@@ -120,15 +121,17 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Results */}
-      <div className="flex-1 px-4 pb-12">
-        <SearchResults
-          results={results}
-          onResearch={(id) => console.log("Research:", id)}
-          onGenerateEmail={(id) => console.log("Generate email:", id)}
-          onSave={(id) => console.log("Save:", id)}
-        />
-      </div>
+      {/* Results — only show after searching */}
+      {hasSearched && (
+        <div className="flex-1 px-4 pb-12">
+          <SearchResults
+            results={results}
+            onResearch={(id) => console.log("Research:", id)}
+            onGenerateEmail={(id) => console.log("Generate email:", id)}
+            onSave={(id) => console.log("Save:", id)}
+          />
+        </div>
+      )}
     </div>
   );
 }
