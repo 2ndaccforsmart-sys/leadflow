@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Search,
@@ -28,6 +28,7 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const handleAsideClick = (e: React.MouseEvent<HTMLElement>) => {
     if (!isCollapsed) return;
@@ -50,7 +51,11 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onToggle();
+            if (isCollapsed) {
+              onToggle();
+            } else {
+              router.push("/dashboard");
+            }
           }}
           className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-muted cursor-pointer"
         >
