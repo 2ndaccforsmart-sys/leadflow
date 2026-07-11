@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 
@@ -28,60 +28,84 @@ function getRandomMessage(): string {
 }
 
 export function AINudgeProvider({ userName }: { userName?: string }) {
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastToastRef = useRef(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeRef = useRef(false);
+
+  const clearAll = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    activeRef.current = false;
+  }, []);
+
+  const startNudges = useCallback(
+    (ms: number) => {
+      if (activeRef.current) return;
+
+      const fire = () => {
+        const greeting = userName ? `Hey ${userName}, ` : "";
+        toast(greeting + getRandomMessage(), {
+          icon: <Sparkles className="h-4 w-4 text-emerald-500" />,
+        });
+      };
+
+      // First nudge after a random offset
+      const initialDelay = Math.random() * ms * 0.3;
+      timeoutRef.current = setTimeout(() => {
+        fire();
+        activeRef.current = true;
+        intervalRef.current = setInterval(fire, ms);
+      }, initialDelay);
+    },
+    [userName]
+  );
 
   useEffect(() => {
-    const checkAndSchedule = () => {
-      // Clear existing timer
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-
+    const getSetting = (): string => {
       try {
         const stored = localStorage.getItem("settings_ai_nudges");
-        const value: string = stored ? JSON.parse(stored) : "Off";
-
-        if (value === "Off") return;
-
-        const ms = TIMER_MAP[value];
-        if (!ms) return;
-
-        // Start with a random offset so first nudge isn't immediate
-        const initialDelay = Math.random() * ms * 0.3;
-        const initialTimer = setTimeout(() => {
-          const greeting = userName ? `Hey ${userName}, ` : "";
-          toast(greeting + getRandomMessage(), {
-            icon: <Sparkles className="h-4 w-4 text-emerald-500" />,
-          });
-
-          // Then fire at the regular interval
-          timerRef.current = setInterval(() => {
-            const greeting2 = userName ? `Hey ${userName}, ` : "";
-            toast(greeting2 + getRandomMessage(), {
-              icon: <Sparkles className="h-4 w-4 text-emerald-500" />,
-            });
-          }, ms);
-        }, initialDelay);
-
-        return () => {
-          clearTimeout(initialTimer);
-          if (timerRef.current) clearInterval(timerRef.current);
-        };
+        return stored ? JSON.parse(stored) : "Off";
       } catch {
-        // ignore
+        return "Off";
       }
     };
 
-    // Check on mount and re-check every 2s for setting changes
-    checkAndSchedule();
-    const pollId = setInterval(checkAndSchedule, 2000);
-    return () => {
-      clearInterval(pollId);
-      if (timerRef.current) clearInterval(timerRef.current);
+    const schedule = () => {
+      clearAll();
+      const value = getSetting();
+      if (value === "Off") return;
+      const ms = TIMER_MAP[value];
+      if (!ms) return;
+      startNudges(ms);
     };
-  }, [userName]);
+
+    // Listen for visibility changes — pause when tab hidden
+    const onVisibility = () => {
+      if (document.hidden) {
+        clearAll();
+      } else {
+        schedule();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    schedule();
+
+    // Poll for setting changes
+    const pollId = setInterval(schedule, 2000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      clearInterval(pollId);
+      clearAll();
+    };
+  }, [clearAll, startNudges]);
 
   return null;
 }
