@@ -193,6 +193,14 @@ export default function AssistantPage() {
     }
   };
 
+  const handleRenameConversation = (id: string, newTitle: string) => {
+    setConversations(
+      conversations.map((c) =>
+        c.id === id ? { ...c, title: newTitle } : c
+      )
+    );
+  };
+
   const handleSendMessage = async (content: string) => {
     let currentConvId = activeConvId;
 
@@ -405,6 +413,7 @@ export default function AssistantPage() {
             onSelect={handleSelectConversation}
             onNew={handleNewConversation}
             onDelete={handleDeleteConversation}
+            onRename={handleRenameConversation}
           />
         </div>
 

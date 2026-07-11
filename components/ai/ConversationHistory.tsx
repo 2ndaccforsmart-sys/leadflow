@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, MessageSquare, Trash2, Search, AlertTriangle, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Plus, MessageSquare, Trash2, Search, AlertTriangle, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Conversation {
@@ -17,6 +17,7 @@ interface ConversationHistoryProps {
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, newTitle: string) => void;
 }
 
 function groupByDate(conversations: Conversation[]) {
@@ -58,9 +59,13 @@ export function ConversationHistory({
   onSelect,
   onNew,
   onDelete,
+  onRename,
 }: ConversationHistoryProps) {
   const [search, setSearch] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   const filtered = search
     ? conversations.filter(
@@ -87,6 +92,44 @@ export function ConversationHistory({
   const handleCancelDelete = () => {
     setConfirmDeleteId(null);
   };
+
+  const handleContextMenu = (e: React.MouseEvent, conv: Conversation) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingId(conv.id);
+    setEditValue(conv.title);
+  };
+
+  const handleRenameSubmit = (id: string) => {
+    const trimmed = editValue.trim();
+    if (trimmed && trimmed !== conversations.find((c) => c.id === id)?.title) {
+      onRename(id, trimmed);
+    }
+    setEditingId(null);
+    setEditValue("");
+  };
+
+  const handleRenameCancel = () => {
+    setEditingId(null);
+    setEditValue("");
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent, id: string) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleRenameSubmit(id);
+    } else if (e.key === "Escape") {
+      handleRenameCancel();
+    }
+  };
+
+  // Focus input when entering edit mode
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingId]);
 
   return (
     <div className="flex h-full flex-col border-r border-border/60 bg-card/50">
@@ -164,7 +207,10 @@ export function ConversationHistory({
                   {group.items.map((conv) => (
                     <div
                       key={conv.id}
-                      onClick={() => onSelect(conv.id)}
+                      onClick={() => {
+                        if (editingId !== conv.id) onSelect(conv.id);
+                      }}
+                      onContextMenu={(e) => handleContextMenu(e, conv)}
                       className={cn(
                         "group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-all duration-150",
                         conv.id === activeConvId
@@ -173,26 +219,47 @@ export function ConversationHistory({
                       )}
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-medium">
-                          {conv.title}
-                        </p>
-                      </div>
-                      <span
-                        className={cn(
-                          "flex-shrink-0 text-[10px]",
-                          conv.id === activeConvId
-                            ? "text-primary-foreground/60"
-                            : "text-muted-foreground/40"
+                        {editingId === conv.id ? (
+                          <input
+                            ref={editInputRef}
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={() => handleRenameSubmit(conv.id)}
+                            onKeyDown={(e) => handleRenameKeyDown(e, conv.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className={cn(
+                              "w-full rounded border bg-background px-1.5 py-0.5 text-[13px] font-medium outline-none ring-1 ring-ring",
+                              conv.id === activeConvId
+                                ? "text-primary-foreground"
+                                : "text-foreground"
+                            )}
+                          />
+                        ) : (
+                          <p className="truncate text-[13px] font-medium">
+                            {conv.title}
+                          </p>
                         )}
-                      >
-                        {formatRelativeTime(conv.timestamp)}
-                      </span>
-                      <button
-                        onClick={(e) => handleDeleteClick(e, conv.id)}
-                        className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded opacity-0 transition-opacity duration-150 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                      </div>
+                      {editingId !== conv.id && (
+                        <>
+                          <span
+                            className={cn(
+                              "flex-shrink-0 text-[10px]",
+                              conv.id === activeConvId
+                                ? "text-primary-foreground/60"
+                                : "text-muted-foreground/40"
+                            )}
+                          >
+                            {formatRelativeTime(conv.timestamp)}
+                          </span>
+                          <button
+                            onClick={(e) => handleDeleteClick(e, conv.id)}
+                            className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded opacity-0 transition-opacity duration-150 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
