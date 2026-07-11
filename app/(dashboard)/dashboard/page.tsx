@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [searchValue, setSearchValue] = useState("");
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [greeting, setGreeting] = useState("");
+  const [removeBlob, setRemoveBlob] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
   const [displayText, setDisplayText] = useState(placeholderTexts[0]);
@@ -96,6 +97,18 @@ export default function DashboardPage() {
 
     return () => subscription.unsubscribe();
   }, [supabase]);
+
+  // Read blob setting
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("settings_remove_blob");
+      if (stored !== null) {
+        setRemoveBlob(JSON.parse(stored));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     if (prefersReducedMotion) return;
@@ -167,7 +180,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <SpotlightCard className="flex min-h-[calc(100vh-7rem)] flex-col items-center justify-center" size={160} opacity={0.8}>
+    <SpotlightCard className="flex min-h-[calc(100vh-7rem)] flex-col items-center justify-center" size={160} opacity={0.8} removeBlob={removeBlob}>
       <div className="w-full max-w-2xl space-y-12">
         <FadeIn delay={0} y={8} className="text-center">
           <p className="text-base text-muted-foreground">

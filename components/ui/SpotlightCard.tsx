@@ -7,6 +7,7 @@ interface SpotlightCardProps {
   className?: string;
   size?: number; // Base size of the main blob
   opacity?: number;
+  removeBlob?: boolean;
 }
 
 interface MetaballPoint {
@@ -21,6 +22,7 @@ export function SpotlightCard({
   className = "",
   size = 140,
   opacity = 0.85,
+  removeBlob = false,
 }: SpotlightCardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -149,61 +151,65 @@ export function SpotlightCard({
   return (
     <div
       ref={containerRef}
-      onPointerMove={handlePointerMove}
-      onPointerEnter={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
+      onPointerMove={removeBlob ? undefined : handlePointerMove}
+      onPointerEnter={removeBlob ? undefined : handlePointerMove}
+      onPointerLeave={removeBlob ? undefined : handlePointerLeave}
       className={`relative overflow-hidden ${className}`}
     >
-      {/* 1. Liquid Gooey Container */}
-      <div
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{
-          filter: "url(#goo)",
-          opacity,
-          mixBlendMode: "difference",
-        }}
-      >
-        {pointsRef.current.map((p, idx) => (
+      {!removeBlob && (
+        <>
+          {/* 1. Liquid Gooey Container */}
           <div
-            key={idx}
-            ref={p.elRef as any}
-            className="absolute bg-white pointer-events-none"
+            className="pointer-events-none absolute inset-0 z-0"
             style={{
-              width: `${p.radius * 2}px`,
-              height: `${p.radius * 2}px`,
-              left: 0,
-              top: 0,
-              filter: "blur(4px)",
+              filter: "url(#goo)",
+              opacity,
+              mixBlendMode: "difference",
             }}
-          />
-        ))}
-      </div>
+          >
+            {pointsRef.current.map((p, idx) => (
+              <div
+                key={idx}
+                ref={p.elRef as any}
+                className="absolute bg-white pointer-events-none"
+                style={{
+                  width: `${p.radius * 2}px`,
+                  height: `${p.radius * 2}px`,
+                  left: 0,
+                  top: 0,
+                  filter: "blur(4px)",
+                }}
+              />
+            ))}
+          </div>
 
-      {/* 2. Hidden SVG Gooey Filter */}
-      <svg
-        style={{
-          position: "absolute",
-          width: "1px",
-          height: "1px",
-          left: "-9999px",
-          top: "-9999px",
-          overflow: "hidden",
-          pointerEvents: "none",
-        }}
-      >
-        <defs>
-          <filter id="goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur" />
-            <feColorMatrix
-              in="blur"
-              mode="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 28 -10"
-              result="goo"
-            />
-            <feBlend in="SourceGraphic" in2="goo" />
-          </filter>
-        </defs>
-      </svg>
+          {/* 2. Hidden SVG Gooey Filter */}
+          <svg
+            style={{
+              position: "absolute",
+              width: "1px",
+              height: "1px",
+              left: "-9999px",
+              top: "-9999px",
+              overflow: "hidden",
+              pointerEvents: "none",
+            }}
+          >
+            <defs>
+              <filter id="goo">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur" />
+                <feColorMatrix
+                  in="blur"
+                  mode="matrix"
+                  values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 28 -10"
+                  result="goo"
+                />
+                <feBlend in="SourceGraphic" in2="goo" />
+              </filter>
+            </defs>
+          </svg>
+        </>
+      )}
 
       {/* 3. Content */}
       <div className="relative z-[1]">{children}</div>

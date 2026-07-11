@@ -92,6 +92,7 @@ export default function SettingsPage() {
   const [newMatchAlerts, setNewMatchAlerts] = useSetting("settings_new_match_alerts", false);
   const [activityPanel, setActivityPanel] = useSetting("settings_activity_panel", true);
   const [compactMode, setCompactMode] = useSetting("settings_compact_mode", false);
+  const [removeBlob, setRemoveBlob] = useSetting("settings_remove_blob", false);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-12">
@@ -216,6 +217,16 @@ export default function SettingsPage() {
           description="Reduce spacing for a denser view"
         >
           <Switch checked={compactMode} onCheckedChange={setCompactMode} />
+        </SettingRow>
+      </SectionCard>
+
+      {/* ── Dashboard ── */}
+      <SectionCard title="Dashboard">
+        <SettingRow
+          label="Remove Blob Animation"
+          description="Hide the cursor-following blob effect on the dashboard"
+        >
+          <Switch checked={removeBlob} onCheckedChange={setRemoveBlob} />
         </SettingRow>
       </SectionCard>
     </div>
