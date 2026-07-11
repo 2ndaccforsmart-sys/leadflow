@@ -294,7 +294,10 @@ export default function AssistantPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ firstMessage: cleanContent, responseText: assistantContent }),
         })
-          .then((res) => res.json())
+          .then((res) => {
+            if (!res.ok) throw new Error(`Title API returned ${res.status}`);
+            return res.json();
+          })
           .then(({ title }) => {
             if (title && title !== "New Chat") {
               setConversations((prev) =>
@@ -305,20 +308,20 @@ export default function AssistantPage() {
             }
           })
           .catch((err) => {
-            console.error("Title generation failed:", err);
-            // Fallback: use first message as title
-            setConversations((prev) =>
-              prev.map((c) =>
-                c.id === currentConvId
-                  ? {
-                      ...c,
-                      title:
-                        cleanContent.slice(0, 40) +
-                        (cleanContent.length > 40 ? "..." : ""),
-                    }
-                  : c
-              )
-            );
+            console.error("Title generation failed, using response fallback:", err);
+            // Fallback: use the first meaningful line of the AI response
+            const fallback = assistantContent
+              .replace(/^["""'*#\s]+/, "")
+              .split(/[.!\n?]/)[0]
+              .trim()
+              .slice(0, 45);
+            if (fallback && fallback.length > 3) {
+              setConversations((prev) =>
+                prev.map((c) =>
+                  c.id === currentConvId ? { ...c, title: fallback } : c
+                )
+              );
+            }
           });
       }
     } catch (error) {
