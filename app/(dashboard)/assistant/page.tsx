@@ -33,15 +33,19 @@ export default function AssistantPage() {
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [persistentMemories, setPersistentMemories] = useState(true);
+  const [reopenChats, setReopenChats] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Read web search setting from localStorage
+  // Read settings from localStorage
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("settings_web_search");
-      if (stored !== null) {
-        setWebSearchEnabled(JSON.parse(stored));
-      }
+      const ws = localStorage.getItem("settings_web_search");
+      if (ws !== null) setWebSearchEnabled(JSON.parse(ws));
+      const pm = localStorage.getItem("settings_persistent_memories");
+      if (pm !== null) setPersistentMemories(JSON.parse(pm));
+      const rc = localStorage.getItem("settings_reopen_chats");
+      if (rc !== null) setReopenChats(JSON.parse(rc));
     } catch {
       // ignore
     }
@@ -49,11 +53,11 @@ export default function AssistantPage() {
 
   // Load conversations from localStorage on mount
   useEffect(() => {
+    if (!persistentMemories) return;
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Rehydrate Date objects
         const rehydrated: Conversation[] = parsed.map((c: any) => ({
           ...c,
           timestamp: new Date(c.timestamp),
@@ -63,32 +67,34 @@ export default function AssistantPage() {
           })),
         }));
         setConversations(rehydrated);
-        // Restore last active conversation
-        const lastActive = localStorage.getItem("chat_active_id");
-        if (lastActive && rehydrated.some((c) => c.id === lastActive)) {
-          setActiveConvId(lastActive);
+        // Restore last active conversation only if reopen is on
+        if (reopenChats) {
+          const lastActive = localStorage.getItem("chat_active_id");
+          if (lastActive && rehydrated.some((c) => c.id === lastActive)) {
+            setActiveConvId(lastActive);
+          }
         }
       }
     } catch {
       // ignore
     }
-  }, []);
+  }, [persistentMemories, reopenChats]);
 
-  // Debounced save to localStorage — skip during streaming
+  // Debounced save to localStorage — skip during streaming, skip if disabled
   useEffect(() => {
-    if (isStreaming) return;
+    if (!persistentMemories || isStreaming) return;
     const timer = setTimeout(() => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
-        if (activeConvId) {
+        if (activeConvId && reopenChats) {
           localStorage.setItem("chat_active_id", activeConvId);
         }
       } catch {
-        // storage full or unavailable — silently fail
+        // storage full — silently fail
       }
     }, 600);
     return () => clearTimeout(timer);
-  }, [conversations, activeConvId, isStreaming]);
+  }, [conversations, activeConvId, isStreaming, persistentMemories, reopenChats]);
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
   const messages = useMemo(() => activeConv?.messages || [], [activeConv]);

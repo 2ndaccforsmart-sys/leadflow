@@ -93,6 +93,8 @@ export default function SettingsPage() {
   const [activityPanel, setActivityPanel] = useSetting("settings_activity_panel", true);
   const [compactMode, setCompactMode] = useSetting("settings_compact_mode", false);
   const [removeBlob, setRemoveBlob] = useSetting("settings_remove_blob", false);
+  const [persistentMemories, setPersistentMemories] = useSetting("settings_persistent_memories", true);
+  const [reopenChats, setReopenChats] = useSetting("settings_reopen_chats", true);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-12">
@@ -180,6 +182,25 @@ export default function SettingsPage() {
             ))}
           </div>
         </div>
+      </SectionCard>
+
+      {/* ── Chat ── */}
+      <SectionCard title="Chat">
+        <SettingRow
+          label="Persistent Memories"
+          description="Save chat conversations across sessions"
+        >
+          <Switch checked={persistentMemories} onCheckedChange={setPersistentMemories} />
+        </SettingRow>
+
+        <SettingsDivider />
+
+        <SettingRow
+          label="Reopen on Past Chats"
+          description="Restore the last active conversation on page load"
+        >
+          <Switch checked={reopenChats} onCheckedChange={setReopenChats} />
+        </SettingRow>
       </SectionCard>
 
       {/* ── Notifications ── */}

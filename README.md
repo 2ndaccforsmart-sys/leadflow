@@ -19,10 +19,11 @@ Each lead gets a full profile: company overview, industry tags, employee count, 
 ### 🤖 AI Assistant
 Chat with an AI assistant that knows your leads. Features:
 - **Streaming responses** — see output as it's generated
-- **Conversation history** — sessions persist with auto-generated titles
+- **Conversation history** — sessions persist with auto-generated titles (toggle in Settings)
 - **Web search mode** — toggle on or use `/web-search` prefix manually; fetches real-time results from DuckDuckGo
 - **Markdown rendering** — supports code blocks, lists, links, and more
 - **Suggested prompts** to get started quickly
+- **Persistent memories** — chats survive page refresh; optionally reopen last conversation on load
 
 ### ✉️ Email Composer
 Craft personalized outreach emails with AI. Choose from **5 tones**:
@@ -37,8 +38,10 @@ Visual kanban-style pipeline with stages: Lead → Qualified → Proposal → Ne
 Tunable preferences stored in localStorage:
 - **AI & Automation** — Suggestions, Auto-Research, Email Drafts, Web Search
 - **AI Nudges** — Casual reminders on a configurable interval (Off / 5m / 15m / 30m / 1h / 3h / 12h / 24h)
+- **Chat** — Persistent Memories (save across sessions), Reopen on Past Chats (restore last active conversation)
 - **Notifications** — Research Alerts, New Match Alerts
 - **Display** — Activity Panel toggle, Compact Mode
+- **Dashboard** — Remove Blob Animation
 
 ### 🔐 Auth
 Seamless sign-in via Supabase. On first login, creates an account automatically — no separate registration step needed.
