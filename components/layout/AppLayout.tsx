@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { RightContextPanel } from "./RightContextPanel";
+import { AINudgeProvider } from "./AINudgeProvider";
 import { useSidebar } from "./SidebarProvider";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       {showActivityPanel && (
         <RightContextPanel isOpen={rightPanelOpen} />
       )}
+      <AINudgeProvider />
     </div>
   );
 }

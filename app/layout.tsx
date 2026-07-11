@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SidebarProvider } from "@/components/layout/SidebarProvider";
 import { MotionProvider } from "@/components/motion";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,6 +34,14 @@ export default function RootLayout({
         <MotionProvider>
           <SidebarProvider>{children}</SidebarProvider>
         </MotionProvider>
+        <Toaster
+          position="bottom-right"
+          richColors
+          closeButton
+          toastOptions={{
+            duration: 6000,
+          }}
+        />
       </body>
     </html>
   );
