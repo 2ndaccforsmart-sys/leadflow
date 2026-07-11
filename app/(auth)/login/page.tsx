@@ -37,7 +37,7 @@ export default function LoginPage() {
         password,
       });
 
-      // 2. If user doesn't exist, auto-signup
+      // 2. If sign-in fails, check if it's an invalid credentials error
       if (signInError) {
         const isInvalidCredentials =
           signInError.message.includes("Invalid login credentials") ||
@@ -57,6 +57,12 @@ export default function LoginPage() {
           });
 
           if (signUpError) {
+            // If user already exists, it's a wrong password — not a signup error
+            if (signUpError.message.toLowerCase().includes("already")) {
+              toast.error("Incorrect password for this account.");
+              return;
+            }
+
             toast.error(signUpError.message);
             return;
           }
