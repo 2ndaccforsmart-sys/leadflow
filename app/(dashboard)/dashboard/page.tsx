@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, Sparkles } from "lucide-react";
 import { m, useReducedMotion } from "framer-motion";
 import { FadeIn, FadeInStagger, FadeInStaggerItem } from "@/components/motion";
-import { getGreeting, getTimeIcon } from "@/lib/greetings";
+import { getGreeting } from "@/lib/greetings";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
@@ -46,7 +46,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchProfile() {
-      // Use getSession() first - reads from localStorage instantly, no network request
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -59,12 +58,10 @@ export default function DashboardPage() {
           .eq("id", user.id)
           .single();
 
-        // Calculate greeting ONCE when profile resolves
         const name = profileData?.name || user.email?.split("@")[0] || "User";
         const { greeting: timeGreeting, action } = getGreeting(name);
         setGreeting(`${timeGreeting} ${action}`);
       } else {
-        // Mock user fallback for greeting when no session
         const { greeting: timeGreeting, action } = getGreeting("Thanki");
         setGreeting(`${timeGreeting} ${action}`);
       }
@@ -88,7 +85,6 @@ export default function DashboardPage() {
         const { greeting: timeGreeting, action } = getGreeting(name);
         setGreeting(`${timeGreeting} ${action}`);
       } else {
-        // Mock user fallback when no session
         const { greeting: timeGreeting, action } = getGreeting("Thanki");
         setGreeting(`${timeGreeting} ${action}`);
       }
@@ -159,8 +155,6 @@ export default function DashboardPage() {
     return () => cancelAnimationFrame(rafId);
   }, [prefersReducedMotion]);
 
-  const timeIcon = getTimeIcon();
-
   const handleSearch = () => {
     if (searchValue.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchValue.trim())}`);
@@ -184,7 +178,7 @@ export default function DashboardPage() {
       <div className="w-full max-w-2xl space-y-12">
         <FadeIn delay={0} y={8} className="text-center">
           <p className="text-base text-muted-foreground">
-            {greeting} {timeIcon}
+            {greeting}
           </p>
         </FadeIn>
 
