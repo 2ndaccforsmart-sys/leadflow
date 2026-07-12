@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { Search, Sparkles } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SearchResults } from "@/components/search/SearchResults";
 import { cn } from "@/lib/utils";
 
@@ -16,39 +16,56 @@ const suggestedItems = [
 ];
 
 function SearchPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
+  const performSearch = useCallback(async (q: string) => {
+    if (!q.trim()) return;
+    setIsSearching(true);
+    setHasSearched(true);
+
+    try {
+      const res = await fetch(`/api/lead-search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      setResults(data.results ?? []);
+    } catch (err) {
+      console.error("Search error:", err);
+      setResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
   // On mount, read ?q= from URL and auto-search
   useEffect(() => {
     const q = searchParams.get("q");
     if (q?.trim()) {
       setQuery(q.trim());
-      setIsSearching(true);
-      setHasSearched(true);
-      setTimeout(() => {
-        setResults([]);
-        setIsSearching(false);
-      }, 400);
+      performSearch(q.trim());
     }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = () => {
     if (!query.trim()) return;
-    setIsSearching(true);
-    setHasSearched(true);
-    setTimeout(() => {
-      setResults([]);
-      setIsSearching(false);
-    }, 400);
+    // Update URL so the search is shareable
+    router.replace(`/search?q=${encodeURIComponent(query.trim())}`, {
+      scroll: false,
+    });
+    performSearch(query);
   };
 
   const handleSuggestedSearch = (label: string) => {
     setQuery(label);
-    handleSearch();
+    router.replace(`/search?q=${encodeURIComponent(label)}`, {
+      scroll: false,
+    });
+    performSearch(label);
   };
 
   return (
