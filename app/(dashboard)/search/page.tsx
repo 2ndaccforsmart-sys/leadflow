@@ -1,9 +1,10 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { Search, Sparkles } from "lucide-react";
+import { Loader2, Search, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SearchResults } from "@/components/search/SearchResults";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const suggestedItems = [
@@ -21,22 +22,38 @@ function SearchPageContent() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const performSearch = useCallback(async (q: string) => {
+  const performSearch = useCallback(async (q: string, pageNum: number = 1, append: boolean = false) => {
     if (!q.trim()) return;
-    setIsSearching(true);
-    setHasSearched(true);
+
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setIsSearching(true);
+      setHasSearched(true);
+    }
 
     try {
-      const res = await fetch(`/api/lead-search?q=${encodeURIComponent(q)}`);
+      const res = await fetch(
+        `/api/lead-search?q=${encodeURIComponent(q)}&page=${pageNum}`
+      );
       const data = await res.json();
-      setResults(data.results ?? []);
+      const newResults = data.results ?? [];
+
+      if (append) {
+        setResults((prev) => [...prev, ...newResults]);
+      } else {
+        setResults(newResults);
+      }
     } catch (err) {
       console.error("Search error:", err);
-      setResults([]);
+      if (!append) setResults([]);
     } finally {
       setIsSearching(false);
+      setIsLoadingMore(false);
     }
   }, []);
 
@@ -47,43 +64,51 @@ function SearchPageContent() {
       setQuery(q.trim());
       performSearch(q.trim());
     }
-    // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = () => {
     if (!query.trim()) return;
-    // Update URL so the search is shareable
+    setPage(1);
     router.replace(`/search?q=${encodeURIComponent(query.trim())}`, {
       scroll: false,
     });
-    performSearch(query);
+    performSearch(query.trim(), 1, false);
+  };
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    performSearch(query, nextPage, true);
   };
 
   const handleSuggestedSearch = (label: string) => {
     setQuery(label);
+    setPage(1);
     router.replace(`/search?q=${encodeURIComponent(label)}`, {
       scroll: false,
     });
-    performSearch(label);
+    performSearch(label, 1, false);
   };
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-7rem)]">
       {/* Search Hero */}
-      <div className="flex flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-3xl">
-          <div className="space-y-8">
-            <div
-              className="text-center animate-in fade-in zoom-in-95 duration-300"
-            >
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                Find Your Next Client
-              </h1>
-              <p className="mt-4 text-lg text-muted-foreground/70">
-                Search by industry, location, or company name to discover qualified leads
-              </p>
-            </div>
+      <div className={cn("flex px-4 py-12", hasSearched ? "" : "flex-1 items-center justify-center")}>
+        <div className={cn("w-full max-w-3xl", hasSearched ? "" : "")}>
+          <div className={cn("space-y-8", hasSearched ? "space-y-6" : "")}>
+            {!hasSearched && (
+              <>
+                <div className="text-center animate-in fade-in zoom-in-95 duration-300">
+                  <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+                    Find Your Next Client
+                  </h1>
+                  <p className="mt-4 text-lg text-muted-foreground/70">
+                    Search by industry, location, or company name to discover qualified leads
+                  </p>
+                </div>
+              </>
+            )}
 
             <div
               className="animate-in fade-in zoom-in-95 duration-300"
@@ -126,25 +151,27 @@ function SearchPageContent() {
               </div>
             </div>
 
-            <div
-              className="animate-in fade-in zoom-in-95 duration-300"
-              style={{ animationDelay: "60ms", animationFillMode: "both" }}
-            >
-              <div className="flex flex-wrap items-center justify-center gap-2.5">
-                <span className="text-xs text-muted-foreground/60">Try:</span>
-                {suggestedItems.map((item, i) => (
-                  <button
-                    key={item.label}
-                    onClick={() => handleSuggestedSearch(item.label)}
-                    className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3.5 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-foreground hover:shadow-sm hover:scale-105 active:scale-[0.97] cursor-pointer"
-                    style={{ animationDelay: `${70 + i * 20}ms`, animationFillMode: "both" }}
-                  >
-                    <span>{item.emoji}</span>
-                    <span>{item.label}</span>
-                  </button>
-                ))}
+            {!hasSearched && (
+              <div
+                className="animate-in fade-in zoom-in-95 duration-300"
+                style={{ animationDelay: "60ms", animationFillMode: "both" }}
+              >
+                <div className="flex flex-wrap items-center justify-center gap-2.5">
+                  <span className="text-xs text-muted-foreground/60">Try:</span>
+                  {suggestedItems.map((item, i) => (
+                    <button
+                      key={item.label}
+                      onClick={() => handleSuggestedSearch(item.label)}
+                      className="flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3.5 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-foreground hover:shadow-sm hover:scale-105 active:scale-[0.97] cursor-pointer"
+                      style={{ animationDelay: `${70 + i * 20}ms`, animationFillMode: "both" }}
+                    >
+                      <span>{item.emoji}</span>
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -163,6 +190,27 @@ function SearchPageContent() {
             onGenerateEmail={(id) => console.log("Generate email:", id)}
             onSave={(id) => console.log("Save:", id)}
           />
+
+          {results.length > 0 && (
+            <div className="mt-6 flex justify-center">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleLoadMore}
+                disabled={isLoadingMore}
+                className="cursor-pointer"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  "Load More"
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
