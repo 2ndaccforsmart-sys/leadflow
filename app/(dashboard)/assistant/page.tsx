@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { Suspense, useState, useRef, useEffect, useMemo } from "react";
 import { Sparkles, Send } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { ConversationHistory } from "@/components/ai/ConversationHistory";
 import { SuggestedPrompts } from "@/components/ai/SuggestedPrompts";
 import { CommandDropup, SLASH_COMMANDS } from "@/components/ai/CommandDropup";
@@ -28,7 +29,7 @@ const STORAGE_KEY = "chat_conversations";
 
 const mockConversations: Conversation[] = [];
 
-export default function AssistantPage() {
+export function AssistantPageContent() {
   const [conversations, setConversations] = useState(mockConversations);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
@@ -40,6 +41,8 @@ export default function AssistantPage() {
   const emptyInputRef = useRef<HTMLDivElement>(null);
   const convInputRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
+  const researchDone = useRef(false);
+  const searchParams = useSearchParams();
 
   const handleCommandSelect = (command: string) => {
     setInputValue(command);
@@ -57,6 +60,17 @@ export default function AssistantPage() {
     } catch {
       // ignore
     }
+  }, []);
+
+  // Auto-send research prompt when navigating from search results
+  useEffect(() => {
+    const company = searchParams.get("research");
+    if (company?.trim() && !researchDone.current) {
+      researchDone.current = true;
+      const prompt = `Research ${company.trim()} — give me a detailed overview of this company including what they do, their industry, their market presence, and any relevant details for outreach.`;
+      handleSendMessage(prompt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load conversations from localStorage on mount
@@ -596,5 +610,13 @@ export default function AssistantPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function AssistantPage() {
+  return (
+    <Suspense fallback={<div className="flex h-[calc(100vh-7rem)] items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>}>
+      <AssistantPageContent />
+    </Suspense>
   );
 }

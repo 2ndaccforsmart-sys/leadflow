@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Globe, MapPin, Users, Building2, TrendingUp } from "lucide-react";
+import { ExternalLink, Globe, MapPin, Building2 } from "lucide-react";
 import { m, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/motion";
@@ -10,8 +10,6 @@ interface Company {
   id: string;
   name: string;
   industry: string;
-  employees: string;
-  revenue: string;
   location: string;
   website: string;
   aiScore: number;
@@ -133,18 +131,12 @@ export function SearchResults({
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground/60">
-                    <span className="flex items-center gap-1.5">
-                      <Users className="h-3 w-3" />
-                      {company.employees}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <TrendingUp className="h-3 w-3" />
-                      {company.revenue}
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="h-3 w-3" />
-                      {company.location}
-                    </span>
+                    {company.location && (
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="h-3 w-3" />
+                        {company.location}
+                      </span>
+                    )}
                     <span className="flex items-center gap-1.5">
                       <Globe className="h-3 w-3" />
                       {company.website}

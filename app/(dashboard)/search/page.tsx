@@ -154,7 +154,12 @@ function SearchPageContent() {
         <div className="flex-1 px-4 pb-12">
           <SearchResults
             results={results}
-            onResearch={(id) => console.log("Research:", id)}
+            onResearch={(id) => {
+              const company = results.find((c) => c.id === id);
+              if (company) {
+                router.push(`/assistant?research=${encodeURIComponent(company.name)}`);
+              }
+            }}
             onGenerateEmail={(id) => console.log("Generate email:", id)}
             onSave={(id) => console.log("Save:", id)}
           />

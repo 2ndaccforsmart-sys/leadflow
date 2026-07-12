@@ -29,6 +29,33 @@ function cleanTitle(title: string): string {
     .trim();
 }
 
+/** Check if a title looks like a junk article/listicle rather than a real company */
+function isJunkResult(title: string, snippet: string): boolean {
+  const lower = title.toLowerCase();
+  const snippetLower = snippet.toLowerCase();
+
+  // Titles starting with a digit followed by space, period, or paren (e.g. "3 Best...", "10. Top...")
+  if (/^\d+[\s\.\)]/.test(lower)) return true;
+
+  // Listicle keywords in title
+  const listicleWords = /\b(top|best|guide|review|reviews|list|tips|ways|reasons|things|ideas|examples|strategies)\b/i;
+  if (listicleWords.test(lower)) return true;
+
+  // Comparison-style: "A vs B", "A or B", "A versus B"
+  if (/\b(vs\.?|versus|or)\b/i.test(lower) && /and|or/.test(lower)) return true;
+
+  // Price/comparison indicators in snippet
+  if (/\b(pricing|coupon|discount|how much|cost|compare)\b/i.test(snippetLower)) return true;
+
+  // Article-style suffixes
+  if (/^(the\s+)?(ultimate\s+)?(complete\s+)?guide\b/i.test(lower)) return true;
+
+  // Job listings or event pages
+  if (/apply now|job opening|hiring|event|webinar|register now/i.test(snippetLower)) return true;
+
+  return false;
+}
+
 function extractLocation(snippet: string): string | null {
   const patterns = [
     /(?:in|located\s+in|based\s+in|serving)\s+([A-Z][A-Za-z]+(?:[\s-][A-Z][A-Za-z]+)?)\s*,\s*([A-Z]{2})/,
@@ -94,7 +121,7 @@ function determineLocation(query: string): string {
       return m[2] && m[2].length === 2 ? `${m[1]}, ${m[2]}` : m[1];
     }
   }
-  return "United States";
+  return "";
 }
 
 /** Scrape DDG HTML for search results */
@@ -209,6 +236,9 @@ export async function GET(request: NextRequest) {
       const name = cleanTitle(r.title);
       if (!name || name.length < 2) continue;
 
+      // Filter out articles, listicles, and junk results
+      if (isJunkResult(r.title, r.snippet)) continue;
+
       const location = extractLocation(r.snippet);
       const industry = extractIndustry(r.snippet, query);
 
@@ -216,8 +246,6 @@ export async function GET(request: NextRequest) {
         id: generateId(),
         name,
         industry,
-        employees: "10-50",
-        revenue: "$1M-$5M",
         location: location || determineLocation(query),
         website: domain,
         aiScore: computeScore(r.snippet, query),
