@@ -116,43 +116,63 @@ function determineLocation(query: string): string {
 
 /** Scrape DDG HTML for search results */
 async function searchDuckDuckGo(
-  query: string
+  query: string,
+  label: string
 ): Promise<{ title: string; url: string; snippet: string }[]> {
   const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    },
-  });
+  console.log(`[lead-search] DDG ${label}: fetching "${query}"`);
 
-  const html = await res.text();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
 
-  // If DDG served a captcha, bail early
-  if (html.includes("anomaly-modal") || html.includes("challenge-form")) {
-    return [];
-  }
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+    });
 
-  const $ = cheerio.load(html);
-  const results: { title: string; url: string; snippet: string }[] = [];
+    const html = await res.text();
 
-  $(".result").each((_, el) => {
-    const titleEl = $(el).find(".result__title a");
-    const snippetEl = $(el).find(".result__snippet");
-
-    const title = titleEl.text().trim();
-    const href = titleEl.attr("href") || "";
-    const snippet = snippetEl.text().trim();
-
-    const match = href.match(/uddg=(.+?)(&|$)/);
-    const cleanUrl = match ? decodeURIComponent(match[1]) : href;
-
-    if (title && snippet && cleanUrl) {
-      results.push({ title, url: cleanUrl, snippet });
+    // If DDG served a captcha, bail early
+    if (html.includes("anomaly-modal") || html.includes("challenge-form")) {
+      console.log(`[lead-search] DDG ${label}: captcha detected`);
+      return [];
     }
-  });
 
-  return results;
+    const $ = cheerio.load(html);
+    const results: { title: string; url: string; snippet: string }[] = [];
+
+    $(".result").each((_, el) => {
+      const titleEl = $(el).find(".result__title a");
+      const snippetEl = $(el).find(".result__snippet");
+
+      const title = titleEl.text().trim();
+      const href = titleEl.attr("href") || "";
+      const snippet = snippetEl.text().trim();
+
+      const match = href.match(/uddg=(.+?)(&|$)/);
+      const cleanUrl = match ? decodeURIComponent(match[1]) : href;
+
+      if (title && snippet && cleanUrl) {
+        results.push({ title, url: cleanUrl, snippet });
+      }
+    });
+
+    console.log(`[lead-search] DDG ${label}: ${results.length} results`);
+    return results;
+  } catch (err: any) {
+    if (err.name === "AbortError") {
+      console.log(`[lead-search] DDG ${label}: timed out after 5s`);
+    } else {
+      console.log(`[lead-search] DDG ${label}: error - ${err.message}`);
+    }
+    return [];
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 /** Fallback: Google Custom Search JSON API */
@@ -188,12 +208,13 @@ export async function GET(request: NextRequest) {
     let ddgResults: { title: string; url: string; snippet: string }[] = [];
     try {
       const [linkedIn, general] = await Promise.all([
-        searchDuckDuckGo(`site:linkedin.com/company ${query}`),
-        searchDuckDuckGo(query),
+        searchDuckDuckGo(`site:linkedin.com/company ${query}`, "linkedin"),
+        searchDuckDuckGo(query, "general"),
       ]);
       ddgResults = [...linkedIn, ...general];
-    } catch {
-      // DDG fetch failed silently
+      console.log(`[lead-search] DDG total: ${linkedIn.length} linkedin + ${general.length} general = ${ddgResults.length}`);
+    } catch (err: any) {
+      console.log(`[lead-search] DDG parallel fetch threw: ${err.message}`);
     }
 
     // If DDG returned nothing (blocked), fall back to Google CSE
@@ -244,6 +265,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    console.log(`[lead-search] Final: ${companies.length} companies after dedup/filter (from ${allResults.length} raw results)`);
     return NextResponse.json({ results: companies.slice(0, 12) });
   } catch (error) {
     console.error("Lead search error:", error);
