@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as cheerio from "cheerio";
 
 const LOGO_COLORS = [
   "#6366f1", "#8b5cf6", "#a855f7", "#d946ef",
@@ -36,8 +35,7 @@ function isJunkResult(title: string): boolean {
   // Titles starting with a digit followed by space, period, or paren (e.g. "3 Best...", "10. Top...")
   if (/^\d+[\s\.\)]/.test(lower)) return true;
 
-  // Listicle keywords at the START of the title (not just anywhere — "Best Dentist" is a title, 
-  // but "Smile Dental - Best Dentist" is a real company with "best" as a descriptor)
+  // Listicle keywords at the START of the title
   if (/^(top|best|guide|review|reviews|list|tips|ways|reasons|things|ideas|examples|strategies)\b/i.test(lower)) return true;
 
   // Article-style titles
@@ -114,87 +112,46 @@ function determineLocation(query: string): string {
   return "";
 }
 
-/** Scrape DDG HTML for search results */
-async function searchDuckDuckGo(
+/** Search via Brave Search API */
+async function searchBrave(
   query: string,
   label: string
 ): Promise<{ title: string; url: string; snippet: string }[]> {
-  const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-  console.log(`[lead-search] DDG ${label}: fetching "${query}"`);
+  const apiKey = process.env.BRAVE_SEARCH_API_KEY;
+  if (!apiKey) {
+    console.warn("[lead-search] BRAVE_SEARCH_API_KEY not configured in .env.local");
+    return [];
+  }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+  const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}`;
+  console.log(`[lead-search] Brave ${label}: fetching "${query}"`);
 
   try {
     const res = await fetch(url, {
-      signal: controller.signal,
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "application/json",
+        "X-Subscription-Token": apiKey,
       },
     });
 
-    const html = await res.text();
-
-    // If DDG served a captcha, bail early
-    if (html.includes("anomaly-modal") || html.includes("challenge-form")) {
-      console.log(`[lead-search] DDG ${label}: captcha detected`);
+    if (!res.ok) {
+      console.log(`[lead-search] Brave ${label}: HTTP ${res.status} ${res.statusText}`);
       return [];
     }
 
-    const $ = cheerio.load(html);
-    const results: { title: string; url: string; snippet: string }[] = [];
+    const data = await res.json();
+    const webResults = data.web?.results ?? [];
+    console.log(`[lead-search] Brave ${label}: ${webResults.length} results`);
 
-    $(".result").each((_, el) => {
-      const titleEl = $(el).find(".result__title a");
-      const snippetEl = $(el).find(".result__snippet");
-
-      const title = titleEl.text().trim();
-      const href = titleEl.attr("href") || "";
-      const snippet = snippetEl.text().trim();
-
-      const match = href.match(/uddg=(.+?)(&|$)/);
-      const cleanUrl = match ? decodeURIComponent(match[1]) : href;
-
-      if (title && snippet && cleanUrl) {
-        results.push({ title, url: cleanUrl, snippet });
-      }
-    });
-
-    console.log(`[lead-search] DDG ${label}: ${results.length} results`);
-    return results;
+    return webResults.map((item: any) => ({
+      title: item.title || "",
+      url: item.url || "",
+      snippet: item.description || "",
+    }));
   } catch (err: any) {
-    if (err.name === "AbortError") {
-      console.log(`[lead-search] DDG ${label}: timed out after 5s`);
-    } else {
-      console.log(`[lead-search] DDG ${label}: error - ${err.message}`);
-    }
+    console.log(`[lead-search] Brave ${label}: error - ${err.message}`);
     return [];
-  } finally {
-    clearTimeout(timeout);
   }
-}
-
-/** Fallback: Google Custom Search JSON API */
-async function searchGoogleCSE(
-  query: string
-): Promise<{ title: string; url: string; snippet: string }[]> {
-  const apiKey = process.env.GOOGLE_CSE_API_KEY;
-  const cx = process.env.GOOGLE_CSE_CX;
-  if (!apiKey || !cx) return []; // not configured
-
-  const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
-  const res = await fetch(url);
-  if (!res.ok) return [];
-
-  const data = await res.json();
-  if (!data.items) return [];
-
-  return data.items.map((item: any) => ({
-    title: item.title || "",
-    url: item.link || "",
-    snippet: item.snippet || "",
-  }));
 }
 
 export async function GET(request: NextRequest) {
@@ -204,33 +161,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Try DDG first (two parallel searches: LinkedIn + general)
-    let ddgResults: { title: string; url: string; snippet: string }[] = [];
-    try {
-      const [linkedIn, general] = await Promise.all([
-        searchDuckDuckGo(`site:linkedin.com/company ${query}`, "linkedin"),
-        searchDuckDuckGo(query, "general"),
-      ]);
-      ddgResults = [...linkedIn, ...general];
-      console.log(`[lead-search] DDG total: ${linkedIn.length} linkedin + ${general.length} general = ${ddgResults.length}`);
-    } catch (err: any) {
-      console.log(`[lead-search] DDG parallel fetch threw: ${err.message}`);
-    }
+    // Run two parallel Brave searches: LinkedIn companies + general web
+    const [linkedIn, general] = await Promise.all([
+      searchBrave(`site:linkedin.com/company ${query}`, "linkedin"),
+      searchBrave(query, "general"),
+    ]);
 
-    // If DDG returned nothing (blocked), fall back to Google CSE
-    let allResults = ddgResults;
-    if (allResults.length === 0) {
-      try {
-        allResults = await searchGoogleCSE(query);
-        // Also do a second query for LinkedIn
-        const linkedInFromGoogle = await searchGoogleCSE(`site:linkedin.com/company ${query}`);
-        allResults = [...allResults, ...linkedInFromGoogle];
-      } catch {
-        // Google fallback also failed
-      }
-    }
+    let allResults = [...linkedIn, ...general];
+    console.log(`[lead-search] Brave total: ${linkedIn.length} linkedin + ${general.length} general = ${allResults.length}`);
 
-    // If still nothing, return empty
     if (allResults.length === 0) {
       return NextResponse.json({ results: [] });
     }
