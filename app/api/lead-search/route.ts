@@ -30,28 +30,18 @@ function cleanTitle(title: string): string {
 }
 
 /** Check if a title looks like a junk article/listicle rather than a real company */
-function isJunkResult(title: string, snippet: string): boolean {
+function isJunkResult(title: string): boolean {
   const lower = title.toLowerCase();
-  const snippetLower = snippet.toLowerCase();
 
   // Titles starting with a digit followed by space, period, or paren (e.g. "3 Best...", "10. Top...")
   if (/^\d+[\s\.\)]/.test(lower)) return true;
 
-  // Listicle keywords in title
-  const listicleWords = /\b(top|best|guide|review|reviews|list|tips|ways|reasons|things|ideas|examples|strategies)\b/i;
-  if (listicleWords.test(lower)) return true;
+  // Listicle keywords at the START of the title (not just anywhere — "Best Dentist" is a title, 
+  // but "Smile Dental - Best Dentist" is a real company with "best" as a descriptor)
+  if (/^(top|best|guide|review|reviews|list|tips|ways|reasons|things|ideas|examples|strategies)\b/i.test(lower)) return true;
 
-  // Comparison-style: "A vs B", "A or B", "A versus B"
-  if (/\b(vs\.?|versus|or)\b/i.test(lower) && /and|or/.test(lower)) return true;
-
-  // Price/comparison indicators in snippet
-  if (/\b(pricing|coupon|discount|how much|cost|compare)\b/i.test(snippetLower)) return true;
-
-  // Article-style suffixes
+  // Article-style titles
   if (/^(the\s+)?(ultimate\s+)?(complete\s+)?guide\b/i.test(lower)) return true;
-
-  // Job listings or event pages
-  if (/apply now|job opening|hiring|event|webinar|register now/i.test(snippetLower)) return true;
 
   return false;
 }
@@ -237,7 +227,7 @@ export async function GET(request: NextRequest) {
       if (!name || name.length < 2) continue;
 
       // Filter out articles, listicles, and junk results
-      if (isJunkResult(r.title, r.snippet)) continue;
+      if (isJunkResult(r.title)) continue;
 
       const location = extractLocation(r.snippet);
       const industry = extractIndustry(r.snippet, query);
